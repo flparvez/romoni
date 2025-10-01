@@ -46,7 +46,7 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
         transition={{ staggerChildren: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-[1px] sm:gap-4 md:gap-6"
       >
         {products?.map((product) => (
           <Link key={product._id} href={`/product/${product.slug}`}>

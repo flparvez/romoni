@@ -160,9 +160,9 @@ ProductSchema.pre<IProductDocument>("save", function (next) {
   
   // Automatically calculate discount percentage
   // ✅ CORRECTED FORMULA: The denominator should be this.originalPrice
-  if (this.originalPrice && this.originalPrice > this.price) {
+  if (this.price && this.price > this.originalPrice) {
     this.discount = Math.round(
-      ((this.originalPrice - this.price) / this.originalPrice) * 100
+      ((this.price - this.originalPrice) / this.price) * 100
     );
   } else {
     this.discount = 0;

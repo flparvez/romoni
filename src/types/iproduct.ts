@@ -49,7 +49,7 @@ displayPrice?: number
 
   // Pricing
   price: number;
-  originalPrice?: number;
+  originalPrice: number;
   discount?: number;
   isFreeDelivery?: boolean;
 
