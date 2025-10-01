@@ -82,7 +82,9 @@ export async function PUT(
 
       // Numeric Fields with Type Casting
       price: safeNumber(body.price),
-      originalPrice: body.originalPrice ? safeNumber(body.originalPrice) : undefined,
+displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price),
+      
+      originalPrice: body.originalPrice || 0,
       stock: safeNumber(body.stock),
       sold: safeNumber(body.sold, 0), // Default to 0 if not provided
       popularityScore: safeNumber(body.popularityScore, 0),

@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
       shortName: body.shortName || "",
       description: body.description || "",
       price: Number(body.price),
-      originalPrice: body.originalPrice ? Number(body.originalPrice) : undefined,
+
+      displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price),
+      
+      originalPrice: body.originalPrice || 0,
       discount: body.discount || 0,
       stock: Number(body.stock || 0),
       category: body.category,

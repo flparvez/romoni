@@ -7,7 +7,6 @@ import { useAddToCart } from "@/hooks/AddToCart";
 
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const NewArrived = ({ products }: { products?: IIProduct[] }) => {
   const { addProductToCart } = useAddToCart();
@@ -83,7 +82,7 @@ const NewArrived = ({ products }: { products?: IIProduct[] }) => {
               
               <div className="mt-2 sm:mt-3">
                 <span className="text-lg font-bold text-purple-700">
-                  ৳{product.price.toLocaleString()}
+                  ৳{product?.displayPrice.toLocaleString()}
                 </span>
                 {product.originalPrice && product.originalPrice > product.price && (
                   <span className="ml-2 text-sm text-gray-400 line-through">

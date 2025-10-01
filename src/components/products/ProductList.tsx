@@ -97,7 +97,7 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
 
                 <div className="mt-2 sm:mt-3">
                   <span className="text-lg font-bold text-purple-700">
-                    ৳{product.price.toLocaleString()}
+                    ৳{product.displayPrice.toLocaleString()}
                   </span>
                   {product.originalPrice &&
                     product.originalPrice > product.price && (

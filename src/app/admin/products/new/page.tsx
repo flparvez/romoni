@@ -224,19 +224,19 @@ const CreateProduct = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-1 space-y-6">
       <h1 className="text-3xl font-bold">Create Product</h1>
       <Card>
         <CardHeader><h2 className="text-xl font-semibold">Basic Info</h2></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input name="name" value={formData.name} onChange={handleChange} placeholder="Product Name*" />
-          <Input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" />
+    
           <Input name="shortName" value={formData.shortName} onChange={handleChange} placeholder="Short Name" />
           <Input name="brand" value={formData.brand} onChange={handleChange} placeholder="Brand" />
           <Input name="warranty" value={formData.warranty} onChange={handleChange} placeholder="warranty" />
           <Input name="video" value={formData.video} onChange={handleChange} placeholder="Video URL" />
           <Input name="price" type="number" value={formData.price} onChange={handleChange} placeholder="Price*" />
-          <Input name="originalPrice" type="number" value={formData.originalPrice} onChange={handleChange} placeholder="Original Price" />
+
           <Input name="stock" type="number" value={formData.stock} onChange={handleChange} placeholder="Stock" />
           <Input name="rating" type="number" value={formData.rating} onChange={handleChange} placeholder="Rating" />
           <Input name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma separated)" />

@@ -57,7 +57,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   // ✅ Price + Stock from selected variant
   const getSelectedVariantInfo = () => {
     if (!product.variants || product.variants.length === 0) {
-      return { price: product.price, stock: product.stock };
+      return { price: product.displayPrice, stock: product.stock };
     }
     let variantPrice = product.price;
     let variantStock = product.stock;

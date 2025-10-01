@@ -49,8 +49,8 @@ const navItems: NavItem[] = [
     icon: Package,
     children: [
       { href: "/admin/products", label: "Manage Products" },
-      { href: "/admin/products/attributes", label: "Attribute/Size" },
-      { href: "/admin/products/variant", label: "Variant" },
+      { href: "/admin/products/bulkprice", label: "BulkPrice" },
+      { href: "/admin/products/rprice", label: "Regular Price" },
     ],
   },
   {
