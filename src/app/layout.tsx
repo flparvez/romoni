@@ -26,12 +26,12 @@ const geistMono = Geist_Mono({
 const shopName = "A1 Ladies Collection - Romoni";
 const shopEmail = "support@romoni.store";
 const shopPhone = "+8801613035696";
-const baseUrl = "https://alromoni.vercel.app/";
+const baseUrl = "https://a1romoni.vercel.app/";
 
 // ✅ Metadata (SEO Optimized)
 export const metadata: Metadata = {
   title: {
-    default: "A1 Ladies Collection - Romoni",
+    default: "A1 Ladies Collection | A1 Romoni",
     template: "%s | A1 Romoni",
   },
   description:

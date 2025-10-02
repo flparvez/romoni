@@ -43,8 +43,8 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
     title: `${product.shortName || product.name} Price in Bangladesh - ${product.name}`,
     description,
     keywords: product.seoKeywords?.join(', '),
-    alternates: { canonical: `https://alromoni.vercel.app//product/${product.slug}` },
-    openGraph: { title: product.name, description, url: `https://alromoni.vercel.app//product/${product.slug}`, siteName: 'A1 Romoni', images, type: 'website' },
+    alternates: { canonical: `https://a1romoni.vercel.app//product/${product.slug}` },
+    openGraph: { title: product.name, description, url: `https://a1romoni.vercel.app//product/${product.slug}`, siteName: 'A1 Romoni', images, type: 'website' },
     twitter: { card: 'summary_large_image', title: product.name, description, images: images[0] },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large', 'max-video-preview': -1 } },
   };
@@ -64,7 +64,7 @@ const ProductDetailsPage = async ({ params }: Props) => {
     brand: { '@type': 'Brand', name: 'A1 Romoni' },
     offers: {
       '@type': 'Offer',
-      url: `https://alromoni.vercel.app//product/${product.slug}`,
+      url: `https://a1romoni.vercel.app//product/${product.slug}`,
       priceCurrency: 'BDT',
       price: product.price,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',

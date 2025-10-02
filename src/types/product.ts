@@ -6,7 +6,7 @@ import { IUser } from "@/models/User"
 import { IProductImage } from "./iproduct"
 import { CartItem } from "@/hooks/useCart"
 
-export const SITE_URL = "https://alromoni.vercel.app"       
+export const SITE_URL = "https://a1romoni.vercel.app"       
   
 // export const SITE_URL = "http://localhost:3000";    
 
