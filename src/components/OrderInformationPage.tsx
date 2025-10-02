@@ -23,7 +23,7 @@ const OrderInformationPage = ({ order }: { order: IIOrder }) => {
           <Image
             width={80}
             height={80}
-           src="https://ik.imagekit.io/pemifp53t/1758798108980-481999217_122151293954497451_784184120423218190_n__1__2U8VXOFIX.jpg?updatedAt=1758798111309"
+           src="https://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
             alt="Logo"
             className="w-20 h-20 rounded-full shadow-lg"
           />
