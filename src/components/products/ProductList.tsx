@@ -58,7 +58,7 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
                 transition: { duration: 0.2 },
               }}
               whileTap={{ scale: 0.97 }}
-              className="bg-white rounded-md overflow-hidden relative cursor-pointer flex flex-col transition-all"
+              className="bg-gradient-to-b from-sky-300 to-orange-200  rounded-md overflow-hidden relative cursor-pointer flex flex-col transition-all"
             >
               {/* Discount Badge */}
               {product?.discount ? (
