@@ -8,9 +8,9 @@ export const generateInvoicePdf = (order: IIOrder) => {
   if (typeof window === "undefined") return;
 
   const shopName = "A1 Romoni";
-  const shopAddress = "Elephant Road, Dhaka, Bangladesh";
+  const shopAddress = "8R8Q+W6C Karnaphuli, Chittagong";
   const shopPhone = "01608257876";
-  const shopEmail = "contact@uniquestorebd.store";
+  const shopEmail = "contact@a1romoni.shop";
   const currency = "Tk";
 
   const shopLogo =
