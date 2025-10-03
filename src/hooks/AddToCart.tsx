@@ -23,7 +23,7 @@ export const useAddToCart = () => {
   ) => {
     const cartItem = fromProduct(product, quantity, selectedVariants);
     addToCart(cartItem);
-    toast.success("✅ Added to cart!");
+   
   };
 
   return { addProductToCart };

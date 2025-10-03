@@ -176,12 +176,12 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
                 height={900}
                 className="object-contain rounded-lg w-full h-auto"
                 transformation={[
-                  { width: "1200", height: "900", quality: 85, format: "webp" },
+                  { width: "1200", height: "1000", quality: 85, format: "webp" },
                 ]}
                 loading="eager"
               />
               <button
-                className="absolute top-4 right-4 text-white bg-black/60 rounded-full p-2 hover:bg-black/80 transition-colors"
+                className="absolute top-4 right-4 text-white bg-black/60 rounded-full p-1 hover:bg-black/80 transition-colors"
                 onClick={() => setFullscreen(false)}
               >
                 ✕

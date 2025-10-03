@@ -62,9 +62,9 @@ const ProductSchema = new Schema<IProductDocument>(
       }, { _id: false }),
 
     // Pricing
-    price: { type: Number, required: true },
-    displayPrice: { type: Number },
-    originalPrice: { type: Number },
+    price: { type: Number, required: true }, // Your internal base/cost price
+    displayPrice: { type: Number }, // The price customers see and pay
+    originalPrice: { type: Number }, // The "strikethrough" price for showing a discount
     discount: { type: Number, default: 0 },
     isFreeDelivery: { type: Boolean, default: false },
 
@@ -121,7 +121,7 @@ const ProductSchema = new Schema<IProductDocument>(
 
 // --- Indexes ---
 
-ProductSchema.index({ name: "text", slug: "text" }); // For text search
+ProductSchema.index({ name: "text", slug: "text" });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ sold: -1 });
 ProductSchema.index({ popularityScore: -1 });
@@ -132,43 +132,25 @@ ProductSchema.index({ isFeatured: 1, isActive: 1 });
 // --- Middleware ---
 
 ProductSchema.pre<IProductDocument>("save", function (next) {
-  // Set displayPrice to the base price if it's not already set on creation
+  // On creation, if displayPrice isn't set, default it to the base price.
   if (this.isNew && !this.displayPrice) {
     this.displayPrice = this.price;
   }
   
-  // Automatically calculate discount percentage
-  if (this.originalPrice && this.originalPrice > this.price) {
+  // ✅ CORRECTED: Calculate discount based on originalPrice and displayPrice.
+  // A discount exists only if originalPrice is set and is higher than the displayPrice.
+  if (this.originalPrice && this.originalPrice > this.displayPrice) {
     this.discount = Math.round(
-      ((this.originalPrice - this.price) / this.price) * 100
+      ((this.originalPrice - this.displayPrice) / this.originalPrice) * 100
     );
   } else {
+    // Otherwise, there is no discount.
     this.discount = 0;
-  }
-  next();
-});
-
-// Orginal Price
-
-// --- Middleware ---
-
-ProductSchema.pre<IProductDocument>("save", function (next) {
-  // Set displayPrice to the base price if it's not already set on creation
-  if (this.isNew && !this.displayPrice) {
-    this.displayPrice = this.price;
   }
   
-  // Automatically calculate discount percentage
-  // ✅ CORRECTED FORMULA: The denominator should be this.originalPrice
-  if (this.price && this.price > this.originalPrice) {
-    this.discount = Math.round(
-      ((this.price - this.originalPrice) / this.price) * 100
-    );
-  } else {
-    this.discount = 0;
-  }
   next();
 });
+
 
 // --- Model Export ---
 

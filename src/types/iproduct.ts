@@ -43,7 +43,7 @@ export interface IProduct {
   slug: string;
   shortName?: string;
   description?: string;
-displayPrice?: number
+displayPrice: number
   // Category relation
   category: ICategoryRef;
 
