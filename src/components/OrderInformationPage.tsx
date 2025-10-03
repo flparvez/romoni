@@ -57,8 +57,7 @@ const OrderInformationPage = ({ order }: { order: IIOrder }) => {
               <span className="font-bold">Phone:</span> {order.phone}
             </p>
             <p>
-              <span className="font-bold">Address:</span> {order.address},{" "}
-              {order.city}
+              <span className="font-bold">Address:</span> {order.address}
             </p>
           </div>
         </motion.div>
@@ -152,7 +151,7 @@ const OrderInformationPage = ({ order }: { order: IIOrder }) => {
 
       {/* Actions */}
       <div className="flex flex-col md:flex-row gap-4 mt-8">
-        <Link href={"https://www.facebook.com/uniquestorebd23/"  } target="_blank" rel="noopener noreferrer"
+        <Link href={"https://www.facebook.com/a1ladiesfr"  } target="_blank" rel="noopener noreferrer"
           className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md"
         >
           Continue Shopping

@@ -423,7 +423,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         className="fixed bottom-24 sm:bottom-6 right-4 z-50"
       >
         <Link
-          href="https://www.facebook.com/uniquestorebd23"
+          href="https://www.facebook.com/a1ladiesfr"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700"
