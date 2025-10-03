@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    if (!body.name || !body.slug) {
+    if (!body.name ) {
       return NextResponse.json(
         { error: "Name and slug are required" },
         { status: 400 }

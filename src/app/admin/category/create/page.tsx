@@ -73,7 +73,7 @@ const FileUpload = ({
 interface Category {
   _id: string
   name: string
-  slug: string
+ 
   lastIndex?: number
   images?: string[]
   parentCategory?: { _id: string; name: string } | null
