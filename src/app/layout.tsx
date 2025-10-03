@@ -1,50 +1,32 @@
-import Providers from "@/components/Providers";
-import { GoogleTagManager } from "@next/third-parties/google";
+// app/layout.tsx
 import type { Metadata, Viewport } from "next";
-import React from "react";
+import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleTagManager } from "@next/third-parties/google";
+import { ImageKitProvider } from "@imagekit/next";
+import { Toaster } from "@/components/ui/sonner";
+import Providers from "@/components/Providers";
+import "./globals.css"; // ✅ Tailwind styles লোড করবে
+import Navbar from "@/components/Header/Navbar";
+import BottomBar from "@/components/Header/Bottom";
 
-// --- Placeholder Components ---
-// These are added to resolve the import errors. Replace them with your actual components.
+// ✅ Fonts
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
 
-const Navbar = () => (
-  <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between h-16">
-        <div className="flex-shrink-0">
-          <a href="/" className="text-xl font-bold">A1 Romoni</a>
-        </div>
-        <nav className="hidden md:block">
-          <div className="ml-10 flex items-baseline space-x-4">
-            <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Home</a>
-            <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Shop</a>
-            <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">About</a>
-          </div>
-        </nav>
-      </div>
-    </div>
-  </header>
-);
-
-const BottomBar = () => (
-  <footer className="bg-gray-100 border-t">
-    <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-      <p>&copy; {new Date().getFullYear()} A1 Ladies Collection - Romoni. All rights reserved.</p>
-    </div>
-  </footer>
-);
-
-
-const ImageKitProvider = ({ children }: { children: React.ReactNode, urlEndpoint: string }) => <>{children}</>;
-const Toaster = () => <div id="sonner-toaster" style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }} />;
-
-// --- End of Placeholders ---
-
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 // ✅ Business Info
 const shopName = "A1 Ladies Collection - Romoni";
 const shopEmail = "support@romoni.store";
 const shopPhone = "+8801608257876";
-const baseUrl = "https://a1romoni.vercel.app/";
+const baseUrl = "https://a1romoni.vercel.app";
 
 // ✅ Metadata (SEO Optimized)
 export const metadata: Metadata = {
@@ -53,7 +35,7 @@ export const metadata: Metadata = {
     template: "%s | A1 Romoni",
   },
   description:
-    "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And  Fast Delivery.",
+    "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery.",
   keywords: [
     "A1 Ladies Collection",
     "Romoni",
@@ -72,7 +54,7 @@ export const metadata: Metadata = {
     siteName: shopName,
     title: "A1 Ladies Collection - Romoni",
     description:
-      "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And  Fast Delivery.",
+      "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery.",
     images: [
       {
         url: `/og-image.jpg`,
@@ -136,7 +118,7 @@ export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-// ✅ JSON-LD Schema for SEO
+// ✅ JSON-LD Schema
 const jsonLdBusiness = {
   "@context": "https://schema.org",
   "@type": "Store",
@@ -161,9 +143,7 @@ const jsonLdBusiness = {
   paymentAccepted: "Cash, bKash, Nagad, Card",
   currenciesAccepted: "BDT",
   hasMap: "https://maps.google.com/?q=23.7629,90.4256",
-  sameAs: [
-    "https://www.facebook.com/a1ladiesfr",
-  ],
+  sameAs: ["https://www.facebook.com/a1ladiesfr"],
 };
 
 // ✅ Root Layout
@@ -177,38 +157,37 @@ export default function RootLayout({
   return (
     <html lang="bn" suppressHydrationWarning>
       <head>
-      
         {/* Preconnects */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link rel="preconnect" href="https://ik.imagekit.io" />
 
         {/* Preload Hero Image */}
-        <link rel="preload" as="image" href="/hero-image.webp" type="image/webp" />
+        <link
+          rel="preload"
+          as="image"
+          href="/hero-image.webp"
+          type="image/webp"
+        />
 
-        {/* JSON-LD Schema */}
+ {/* ✅ Google Site Verification */}
+        <meta
+          name="google-site-verification"
+          content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0"
+        />
+        {/* JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBusiness) }}
         />
-        
-        {/* ✅ Basic Global Styles to replace globals.css */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            margin: 0;
-            padding: 0;
-            background-color: #f9fafb;
-            color: #111827;
-          }
-        `}} />
-
-         <meta name="google-site-verification" content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0" />
       </head>
-
-      <body>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
+      >
         <Providers>
           <ImageKitProvider urlEndpoint={urlEndpoint}>
             <Navbar />
@@ -217,11 +196,10 @@ export default function RootLayout({
           </ImageKitProvider>
           <Toaster />
         </Providers>
-        
+
         {/* GTM */}
         <GoogleTagManager gtmId="GTM-5ZLXGQZG" />
       </body>
     </html>
   );
 }
-
