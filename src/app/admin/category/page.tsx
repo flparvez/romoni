@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import FileUpload from "@/components/Fileupload";
+// Assuming FileUpload component exists at this path
+import FileUpload from "@/components/Fileupload"; 
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -20,6 +21,7 @@ interface Category {
   _id: string;
   name: string;
   slug: string;
+  lastIndex?: number; // ✅ lastIndex added to type
   images?: IImage[];
   parentCategory?: { _id: string; name: string } | null;
 }
@@ -61,6 +63,7 @@ export default function EditCategory() {
           slug: editing.slug,
           parentCategory: editing.parentCategory?._id || null,
           images,
+          lastIndex: editing.lastIndex ? Number(editing.lastIndex) : undefined, // ✅ Send lastIndex to API
         }),
       });
       const data = await res.json();
@@ -105,11 +108,10 @@ export default function EditCategory() {
   return (
     <div className="p-6 space-y-6">
       <Card className="shadow-xl">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg md:text-xl">Manage Categories</CardTitle>
-          {/* Create category  Button*/}
           <Link href="/admin/category/create">
-            <Button className="ml-auto">Create New Category</Button>
+            <Button>Create New</Button>
           </Link>
         </CardHeader>
         <CardContent>
@@ -155,62 +157,80 @@ export default function EditCategory() {
                       </DialogTrigger>
                       <DialogContent className="max-w-lg">
                         <DialogHeader>
-                          <DialogTitle>Edit Category</DialogTitle>
+                          <DialogTitle>Edit: {editing?.name}</DialogTitle>
                         </DialogHeader>
                         {editing && (
                           <form onSubmit={handleEditSubmit} className="space-y-4">
-                            <div className="grid gap-2">
-                              <Label>Name</Label>
-                              <Input
-                                value={editing.name}
-                                onChange={(e) =>
-                                  setEditing((prev) => (prev ? { ...prev, name: e.target.value } : null))
-                                }
-                                required
-                              />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="grid gap-2">
+                                <Label>Name</Label>
+                                <Input
+                                  value={editing.name}
+                                  onChange={(e) =>
+                                    setEditing((prev) => (prev ? { ...prev, name: e.target.value } : null))
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label>Slug</Label>
+                                <Input
+                                  value={editing.slug}
+                                  onChange={(e) =>
+                                    setEditing((prev) => (prev ? { ...prev, slug: e.target.value } : null))
+                                  }
+                                  required
+                                />
+                              </div>
                             </div>
-                            <div className="grid gap-2">
-                              <Label>Slug</Label>
-                              <Input
-                                value={editing.slug}
-                                onChange={(e) =>
-                                  setEditing((prev) => (prev ? { ...prev, slug: e.target.value } : null))
-                                }
-                                required
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Parent Category (optional)</Label>
-                              <Select
-                                onValueChange={(val) =>
-                                  setEditing((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          parentCategory:
-                                            val === "none"
-                                              ? null
-                                              : { _id: val, name: categories.find((c) => c._id === val)?.name || "" },
-                                        }
-                                      : null
-                                  )
-                                }
-                                value={editing.parentCategory?._id || "none"}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="None (Main Category)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">None (Main Category)</SelectItem>
-                                  {categories
-                                    .filter((c) => !c.parentCategory && c._id !== editing._id)
-                                    .map((cat) => (
-                                      <SelectItem key={cat._id} value={cat._id}>
-                                        {cat.name}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="grid gap-2">
+                                <Label>Parent Category</Label>
+                                <Select
+                                  onValueChange={(val) =>
+                                    setEditing((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            parentCategory:
+                                              val === "none"
+                                                ? null
+                                                : { _id: val, name: categories.find((c) => c._id === val)?.name || "" },
+                                          }
+                                        : null
+                                    )
+                                  }
+                                  value={editing.parentCategory?._id || "none"}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="None" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">None (Main Category)</SelectItem>
+                                    {categories
+                                      .filter((c) => !c.parentCategory && c._id !== editing._id)
+                                      .map((cat) => (
+                                        <SelectItem key={cat._id} value={cat._id}>
+                                          {cat.name}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* ✅ lastIndex input added */}
+                              <div className="grid gap-2">
+                                <Label>Display Order</Label>
+                                <Input
+                                  type="number"
+                                  value={editing.lastIndex || ""}
+                                  onChange={(e) =>
+                                    setEditing((prev) => (prev ? { ...prev, lastIndex: Number(e.target.value) } : null))
+                                  }
+                                  placeholder="e.g., 100"
+                                />
+                              </div>
                             </div>
 
                             {!editing.parentCategory && (

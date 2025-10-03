@@ -3,7 +3,7 @@ import { IOrderItem } from "./OrderItem";
 
 
 type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "APPROVED";
-type PaymentType = "FULL" | "PARTIAL";
+type PaymentType = "COD" | "FullPayment";
 type PathaoStatus = "NOT_REQUESTED" | "REQUESTED" | "ACCEPTED" | "DELIVERED" | "CANCELLED";
 
 export interface ICourierHistory {
@@ -63,8 +63,8 @@ const orderSchema = new Schema<IOrder>(
   
     paymentType: {
       type: String,
-      enum: ["FULL", "PARTIAL"],
-      default: "FULL",
+      enum: ["COD", "FullPayment"],
+      default: "COD",
       required: true,
     },
 

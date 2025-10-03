@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Category } from "@/models/Category";
 import { IProductImage } from "@/types/iproduct";
-
+import slugify from "slugify";
 // GET all categories (with parent + subcategories)
 export async function GET() {
   try {
@@ -11,7 +11,7 @@ export async function GET() {
     const categories = await Category.find({})
       .populate("parentCategory", "name slug")
       .populate("subcategories", "name slug")
-      .sort({ createdAt: -1 })
+      .sort({ lastIndex: -1 })
       .lean();
 
     return NextResponse.json({ categories, success: true }, { status: 200 });
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const category = new Category({
       name: body.name,
-      slug: body.slug,
+      slug: slugify(body.name, { lower: true }), 
       description: body.description || "",
       images: categoryImages, // ✅ Use the correctly formatted array
       tags: Array.isArray(body.tags) ? body.tags : [],

@@ -10,6 +10,7 @@ export interface ICategory {
   isFeatured?: boolean;
   isActive?: boolean;
   seoTitle?: string;
+  lastIndex: string;
   seoDescription?: string;
   seoKeywords?: string[];
   createdAt?: Date;
@@ -34,6 +35,7 @@ const CategorySchema = new Schema<ICategoryDocument>(
     images: { type: [ImageSchema], default: [] },
     tags: { type: [String], default: [] },
     parentCategory: { type: Schema.Types.ObjectId, ref: "Category", default: null },
+    lastIndex: { type: String , default: "0" },
     isFeatured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     seoTitle: { type: String },

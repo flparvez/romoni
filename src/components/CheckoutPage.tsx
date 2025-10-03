@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { CartItemRow } from "./CartItemRow";
 import { motion } from "framer-motion";
 import { ArrowLeft, Copy } from "lucide-react";
-import { IIProduct } from "@/types/iproduct";
 
 interface FormData {
   fullName: string;

@@ -68,6 +68,7 @@ export async function PUT(
     category.parentCategory = parentCategory;
     category.isFeatured = body.isFeatured ?? category.isFeatured;
     category.isActive = body.isActive ?? category.isActive;
+    category.lastIndex = body.lastIndex ?? category.lastIndex;
     category.seoTitle = body.seoTitle ?? category.seoTitle;
     category.seoDescription = body.seoDescription ?? category.seoDescription;
     category.seoKeywords = Array.isArray(body.seoKeywords)
