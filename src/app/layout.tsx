@@ -1,3 +1,4 @@
+import { GoogleTagManager } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import React from "react";
 
@@ -34,7 +35,6 @@ const BottomBar = () => (
 const Providers = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 const ImageKitProvider = ({ children }: { children: React.ReactNode, urlEndpoint: string }) => <>{children}</>;
 const Toaster = () => <div id="sonner-toaster" style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }} />;
-const GoogleTagManager = ({ gtmId }: { gtmId: string }) => null; // Placeholder for GTM
 
 // --- End of Placeholders ---
 
@@ -176,8 +176,6 @@ export default function RootLayout({
   return (
     <html lang="bn" suppressHydrationWarning>
       <head>
-        {/* ✅ Google Site Verification */}
-        <meta name="google-site-verification" content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0" />
       
         {/* Preconnects */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -205,6 +203,8 @@ export default function RootLayout({
             color: #111827;
           }
         `}} />
+
+         <meta name="google-site-verification" content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0" />
       </head>
 
       <body>
