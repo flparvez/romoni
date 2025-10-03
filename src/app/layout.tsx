@@ -1,3 +1,4 @@
+import Providers from "@/components/Providers";
 import { GoogleTagManager } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import React from "react";
@@ -32,7 +33,7 @@ const BottomBar = () => (
   </footer>
 );
 
-const Providers = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
 const ImageKitProvider = ({ children }: { children: React.ReactNode, urlEndpoint: string }) => <>{children}</>;
 const Toaster = () => <div id="sonner-toaster" style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }} />;
 
