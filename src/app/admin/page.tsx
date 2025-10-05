@@ -2,7 +2,7 @@
 import AdminNotificationButton from '@/components/admin/AdminNotificationButton';
 import { DashboardCard } from '@/components/admin/DashboardCard';
 import { RecentOrdersCard } from '@/components/admin/RecentOrdersCard';
-import { SalesChartCard } from '@/components/admin/SalesChartCard'; // Import the refactored chart card
+import { SalesChartCard } from '@/components/admin/SalesChartCard';
 
 import { 
   getTotalOrders, 
@@ -12,12 +12,15 @@ import {
   getPendingOrdersCount,
   getOutOfStockProductsCount,
   getRecentOrders,
-  getSalesAnalytics // This function fetches our sales data on the server
-} from '@/lib/action'; // Assuming your actions are here
+  getSalesAnalytics
+} from '@/lib/action';
+
+// By not exporting 'dynamic', this page defaults to static generation.
+// The data will be fetched at build time and revalidated according to the 'unstable_cache' settings.
 
 export default async function AdminDashboard() {
 
-  // Fetch all dashboard data concurrently for better performance
+  // Fetch all dashboard data concurrently. Next.js will use the cached versions.
   const [
     totalRevenue, 
     totalOrders, 
@@ -26,7 +29,7 @@ export default async function AdminDashboard() {
     pendingOrders,
     outOfStockProducts,
     recentOrders,
-    salesData // <-- Capture the sales data here
+    salesData
   ] = await Promise.all([
     getTotalRevenue(),
     getTotalOrders(),
@@ -35,14 +38,15 @@ export default async function AdminDashboard() {
     getPendingOrdersCount(),
     getOutOfStockProductsCount(),
     getRecentOrders(),
-    getSalesAnalytics() // <-- Fetch sales data on the server
+    getSalesAnalytics()
   ]);
 
   // Format currency for display
-  const formattedTotalRevenue = new Intl.NumberFormat('en-US', {
+  const formattedTotalRevenue = new Intl.NumberFormat('en-BD', {
     style: 'currency',
     currency: 'BDT',
-    minimumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(totalRevenue);
 
   return (
@@ -57,7 +61,7 @@ export default async function AdminDashboard() {
           title="Total Revenue" 
           value={formattedTotalRevenue} 
           icon="dollar"
-          description="All delivered orders"
+          description="From all delivered orders"
         />
         <DashboardCard 
           title="Total Orders" 
@@ -81,11 +85,9 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-3">
-            {/* Pass the server-fetched recent orders to the component */}
             <RecentOrdersCard orders={recentOrders} />
         </div>
         <div className="lg:col-span-2">
-            {/* Pass the server-fetched sales data directly as a prop */}
             <SalesChartCard data={salesData} />
         </div>
       </div>

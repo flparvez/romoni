@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,7 +13,6 @@ import {
 import {
   FiExternalLink,
   FiTrash2,
-  FiEdit,
   FiChevronDown,
   FiChevronUp,
   FiPrinter,
@@ -21,13 +20,12 @@ import {
 } from "react-icons/fi";
 import Link from "next/link";
 import { Button } from "../ui/button";
-
 import { Badge } from "../ui/badge";
 import FraudCheck from "./FraudCheck";
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import { IIOrder } from "@/types/product";
 
-const AllOrderTable = ({
+export default function AllOrderTable({
   paginatedOrders,
   onDelete,
   onUpdateStatus,
@@ -35,109 +33,86 @@ const AllOrderTable = ({
   paginatedOrders: IIOrder[];
   onDelete: (id: string) => void;
   onUpdateStatus: (id: string, status: string) => void;
-}) => {
+}) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [fraudResults, setFraudResults] = useState<Record<string, any>>({});
   const [loadingFraud, setLoadingFraud] = useState<string | null>(null);
-  const [errorFraud, setErrorFraud] = useState<Record<string, string | null>>(
-    {}
-  );
+  const [errorFraud, setErrorFraud] = useState<Record<string, string | null>>({});
   const [showFraudModal, setShowFraudModal] = useState<string | null>(null);
 
-  const toggleRowExpansion = async (orderId: string, phone: string) => {
-    const newExpandedRows = new Set(expandedRows);
-
-    if (newExpandedRows.has(orderId)) {
-      newExpandedRows.delete(orderId);
-    } else {
-      newExpandedRows.add(orderId);
-
-      // Auto fetch fraud data if not already loaded
-      if (!fraudResults[orderId] && phone) {
-        setLoadingFraud(orderId);
-        setErrorFraud((prev) => ({ ...prev, [orderId]: null }));
-
-        try {
-          const res = await fetch("/api/fraud-check/phone", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ phone }),
-          });
-
-          const data = await res.json();
-          if (!res.ok || !data.success) {
-            throw new Error(data.error || "Fraud check failed");
-          }
-
-          setFraudResults((prev) => ({ ...prev, [orderId]: data.data }));
-        } catch (err: any) {
-          setErrorFraud((prev) => ({ ...prev, [orderId]: err.message }));
-        } finally {
-          setLoadingFraud(null);
-        }
-      }
+  // ✅ Run first fraud check automatically for the first order (on page load)
+  useEffect(() => {
+    const firstOrder = paginatedOrders?.[0];
+    if (firstOrder && firstOrder.phone && !fraudResults[firstOrder._id]) {
+      handleFraudCheck(firstOrder._id, firstOrder.phone);
     }
+  }, [paginatedOrders]);
 
-    setExpandedRows(newExpandedRows);
+  const handleFraudCheck = async (orderId: string, phone: string) => {
+    try {
+      setLoadingFraud(orderId);
+      setErrorFraud((prev) => ({ ...prev, [orderId]: null }));
+
+      const res = await fetch("/api/fraud-check/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || "Fraud check failed");
+
+      setFraudResults((prev) => ({ ...prev, [orderId]: data.data }));
+    } catch (err: any) {
+      setErrorFraud((prev) => ({ ...prev, [orderId]: err.message }));
+    } finally {
+      setLoadingFraud(null);
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      PENDING: "bg-yellow-100 text-yellow-800",
-      PROCESSING: "bg-blue-100 text-blue-800",
-      SHIPPED: "bg-purple-100 text-purple-800",
-      DELIVERED: "bg-green-100 text-green-800",
-      CANCELLED: "bg-red-100 text-red-800",
-    };
-
-    return (
-      <Badge
-        className={`${
-          statusColors[status] || "bg-gray-100 text-gray-800"
-        } font-medium`}
-      >
-        {status}
-      </Badge>
-    );
-  };
-
-  const getPaymentMethodBadge = (method: string) => {
-    const methodColors: Record<string, string> = {
-      BKASH: "bg-green-100 text-green-800",
-      NAGAD: "bg-purple-100 text-purple-800",
-      COD: "bg-orange-100 text-orange-800",
-    };
-
-    return (
-      <Badge
-        className={`${
-          methodColors[method] || "bg-gray-100 text-gray-800"
-        } font-medium`}
-      >
-        {method}
-      </Badge>
-    );
+  const toggleRowExpansion = (orderId: string, phone: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) newSet.delete(orderId);
+      else {
+        newSet.add(orderId);
+        if (!fraudResults[orderId]) handleFraudCheck(orderId, phone);
+      }
+      return newSet;
+    });
   };
 
   const handlePrintLabel = async (orderId: string) => {
-    //  fetch order by id
-const res = await fetch(`/api/orders/${orderId}`)
-  
-
+    const res = await fetch(`/api/orders/${orderId}`);
     const order = await res.json();
+    generateInvoicePdf(order?.order);
+  };
 
-    generateInvoicePdf(order?.order)
-   
+  const getBadge = (label: string, color: string) => (
+    <Badge className={`${color} font-medium`}>{label}</Badge>
+  );
 
+  const statusColor: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800",
+    PROCESSING: "bg-blue-100 text-blue-800",
+    SHIPPED: "bg-purple-100 text-purple-800",
+    DELIVERED: "bg-green-100 text-green-800",
+    CANCELLED: "bg-red-100 text-red-800",
+  };
+
+  const paymentColor: Record<string, string> = {
+    BKASH: "bg-green-100 text-green-800",
+    NAGAD: "bg-purple-100 text-purple-800",
+    COD: "bg-orange-100 text-orange-800",
   };
 
   return (
     <div className="rounded-md border">
       <Table>
-        <TableCaption>A list of recent orders</TableCaption>
+        <TableCaption>Recent orders</TableCaption>
         <TableHeader>
           <TableRow className="bg-gray-50">
-            <TableHead className="w-[50px]"></TableHead>
+            <TableHead className="w-[40px]" />
             <TableHead>Invoice</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Product</TableHead>
@@ -147,6 +122,7 @@ const res = await fetch(`/api/orders/${orderId}`)
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {paginatedOrders.map((order) => (
             <React.Fragment key={order._id}>
@@ -155,68 +131,62 @@ const res = await fetch(`/api/orders/${orderId}`)
                 onClick={() => toggleRowExpansion(order._id, order.phone)}
               >
                 <TableCell>
-                  {expandedRows.has(order._id) ? (
-                    <FiChevronUp className="h-4 w-4" />
-                  ) : (
-                    <FiChevronDown className="h-4 w-4" />
-                  )}
+                  {expandedRows.has(order._id) ? <FiChevronUp /> : <FiChevronDown />}
                 </TableCell>
-                {/* <Link href={`/admin/orders/${order._id}`}> */}
-                
-                 <TableCell className="font-medium">#{order.orderId}</TableCell>
-                 {/* </Link> */}
+
+                <TableCell className="font-medium">#{order.orderId}</TableCell>
+
                 <TableCell>
                   <div>
                     <div className="font-medium">{order.fullName}</div>
                     <div className="text-sm text-gray-500">{order.phone}</div>
                   </div>
                 </TableCell>
+
                 <TableCell>
-                  <div className="max-w-[220px] truncate">
-             
-                    {order?.items
-                      ?  <div>
-                        {/* image */}
-                        {order.items[0]?.product?.images?.[0] && (
-                          <img
-                            src={order.items[0].product.images[0].url}
-                            alt={order.items[0].product.name}
-                            className="h-8 w-8 object-cover rounded mr-2 inline-block"
-                          />
-                        )}
-                        <h3>{order.items[0].selectedVariantOptions?.Size} </h3>
+                  {order.items?.[0] ? (
+                    <div className="flex items-center gap-2">
+                      {order.items[0].product?.images?.[0]?.url && (
+                        <img
+                          src={order.items[0].product.images[0].url}
+                          alt={order.items[0].product.name}
+                          className="h-8 w-8 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <p>{order.items[0].selectedVariantOptions?.Size}</p>
                         <b>{order.items[0].selectedVariantOptions?.Color}</b>
                       </div>
-                      : "No items"}
-                  </div>
+                    </div>
+                  ) : (
+                    "No items"
+                  )}
                 </TableCell>
+
                 <TableCell>
                   <div className="font-semibold">৳{order.totalAmount}</div>
                   {order.paymentType === "PARTIAL" && (
-                    <div className="text-xs text-gray-500">Partial payment</div>
+                    <p className="text-xs text-gray-500">Partial</p>
                   )}
                 </TableCell>
+
                 <TableCell>
-                  {order.courierHistory?.length > 0 ? (
+                  {order.courierHistory?.[0] ? (
                     <div>
-                      <div className="font-medium">
-                        {order.courierHistory[0].courier}
-                      </div>
+                      <p className="font-medium">{order.courierHistory[0].courier}</p>
                       {order.courierHistory[0].trackingCode && (
-                        <div className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500">
                           {order.courierHistory[0].trackingCode}
-                        </div>
+                        </p>
                       )}
                     </div>
                   ) : (
                     <span className="text-gray-400">Not assigned</span>
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="max-w-[150px] truncate text-sm">
-                  </div>
-                    {order.trxId || "No note"}
-                </TableCell>
+
+                <TableCell>{order.trxId || "No note"}</TableCell>
+
                 <TableCell className="text-right">
                   <div className="flex flex-col gap-1 items-end">
                     <div className="flex gap-1">
@@ -229,7 +199,7 @@ const res = await fetch(`/api/orders/${orderId}`)
                         }}
                         className="h-7 px-2 text-xs"
                       >
-                        Approved
+                        Approve
                       </Button>
                       <Button
                         variant="outline"
@@ -243,16 +213,17 @@ const res = await fetch(`/api/orders/${orderId}`)
                         Cancel
                       </Button>
                     </div>
+
                     <div className="flex gap-1">
-              
                       <Link href={`/admin/orders/${order._id}`}>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={(e) => e.stopPropagation()}
                           className="h-7 px-2 text-xs"
-                        > View
-                          <FiExternalLink className="h-3 w-3" />
+                        >
+                          View
+                          <FiExternalLink className="ml-1 h-3 w-3" />
                         </Button>
                       </Link>
                       <Button
@@ -269,8 +240,12 @@ const res = await fetch(`/api/orders/${orderId}`)
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={order.status === "DELIVERED" || order.status === "PENDING" || order.status === "SHIPPED" || order.status === "APPROVED" }
-                        
+                        disabled={[
+                          "DELIVERED",
+                          "PENDING",
+                          "SHIPPED",
+                          "APPROVED",
+                        ].includes(order.status)}
                         onClick={(e) => {
                           e.stopPropagation();
                           onDelete(order._id);
@@ -287,104 +262,81 @@ const res = await fetch(`/api/orders/${orderId}`)
               {expandedRows.has(order._id) && (
                 <TableRow className="bg-gray-50">
                   <TableCell colSpan={8}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                    <div className="grid md:grid-cols-2 gap-4 p-4">
                       <div>
                         <h4 className="font-semibold mb-2">Order Details</h4>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="text-gray-500">Order Date:</div>
-                          <div>
-                            {new Date(order.createdAt).toLocaleDateString()},{" "}
+                          <p className="text-gray-500">Order Date:</p>
+                          <p>
+                            {new Date(order.createdAt).toLocaleDateString()}{" "}
                             {new Date(order.createdAt).toLocaleTimeString()}
-                          </div>
-
-                          <div className="text-gray-500">Payment Type:</div>
-                          <div>{order.paymentType}</div>
-
-                          <div className="text-gray-500">Status:</div>
-                          <div>{getStatusBadge(order.status)}</div>
-
-                          <div className="text-gray-500">Delivery Charge:</div>
-                          <div>৳{order.deliveryCharge}</div>
+                          </p>
+                          <p className="text-gray-500">Payment:</p>
+                          <p>{getBadge(order.paymentType, paymentColor[order.paymentType] || "")}</p>
+                          <p className="text-gray-500">Status:</p>
+                          <p>{getBadge(order.status, statusColor[order.status] || "")}</p>
+                          <p className="text-gray-500">Delivery:</p>
+                          <p>৳{order.deliveryCharge}</p>
                         </div>
                       </div>
 
                       <div>
                         <h4 className="font-semibold mb-2">Shipping Address</h4>
-                        <div className="text-sm">
+                        <ul className="text-sm space-y-1">
                           <li>{order.fullName}</li>
                           <li>{order.phone}</li>
                           <li>{order.address}</li>
-                          {order.city && <div>{order.city}</div>}
-                        </div>
+                          {order.city && <li>{order.city}</li>}
+                        </ul>
                       </div>
                     </div>
 
-                    {/* Fraud Check Section */}
-               {/* Fraud Check Section */}
-<div className="mt-6 border-t pt-4">
-  <h4 className="font-semibold mb-3 flex items-center gap-2 text-lg">
-    <FiShield className="text-blue-600" /> Fraud Check
-  </h4>
+                    {/* ✅ Fraud Check */}
+                    <div className="mt-6 border-t pt-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-lg">
+                        <FiShield className="text-blue-600" /> Fraud Check
+                      </h4>
 
-  {loadingFraud === order._id && (
-    <p className="text-sm text-gray-500 animate-pulse">🔍 Checking fraud data...</p>
-  )}
+                      {loadingFraud === order._id && (
+                        <p className="text-sm text-gray-500 animate-pulse">🔍 Checking fraud data...</p>
+                      )}
 
-  {errorFraud[order._id] && (
-    <p className="text-sm text-red-500">⚠️ {errorFraud[order._id]}</p>
-  )}
+                      {errorFraud[order._id] && (
+                        <p className="text-sm text-red-500">⚠️ {errorFraud[order._id]}</p>
+                      )}
 
-  {fraudResults[order._id] ? (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Success Ratio</p>
-        <p className="text-lg font-bold text-green-700">
-          {fraudResults[order._id].courierData?.summary?.success_ratio || "N/A"}%
-        </p>
-      </div>
+                      {fraudResults[order._id] ? (
+                        <div className="grid sm:grid-cols-4 gap-3 mb-3">
+                          {[
+                            { label: "Success Ratio", value: `${fraudResults[order._id].courierData?.summary?.success_ratio || "N/A"}%`, color: "bg-green-50 border-green-200 text-green-700" },
+                            { label: "Total Parcels", value: fraudResults[order._id].courierData?.summary?.total_parcel || "N/A", color: "bg-blue-50 border-blue-200 text-blue-700" },
+                            { label: "Success Parcels", value: fraudResults[order._id].courierData?.summary?.success_parcel || "N/A", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                            { label: "Cancelled Parcels", value: fraudResults[order._id].courierData?.summary?.cancelled_parcel || "N/A", color: "bg-red-50 border-red-200 text-red-700" },
+                          ].map((stat) => (
+                            <div key={stat.label} className={`border rounded-lg p-3 text-center ${stat.color}`}>
+                              <p className="text-xs text-gray-500">{stat.label}</p>
+                              <p className="text-lg font-bold">{stat.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        !loadingFraud && <p className="text-sm text-gray-400">No fraud data found</p>
+                      )}
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Total Parcels</p>
-        <p className="text-lg font-bold text-blue-700">
-          {fraudResults[order._id].courierData?.summary?.total_parcel || "N/A"}
-        </p>
-      </div>
-
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Success Parcels</p>
-        <p className="text-lg font-bold text-emerald-700">
-          {fraudResults[order._id].courierData?.summary?.success_parcel || "N/A"}
-        </p>
-      </div>
-
-      <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-        <p className="text-xs text-gray-500">Cancelled Parcels</p>
-        <p className="text-lg font-bold text-red-700">
-          {fraudResults[order._id].courierData?.summary?.cancelled_parcel || "N/A"}
-        </p>
-      </div>
-    </div>
-  ) : (
-    !loadingFraud && (
-      <p className="text-sm text-gray-400">No fraud data found</p>
-    )
-  )}
-
-  {fraudResults[order._id] && (
-    <Button
-      size="sm"
-      className="mt-2"
-      variant="outline"
-      onClick={(e) => {
-        e.stopPropagation();
-        setShowFraudModal(order._id);
-      }}
-    >
-      View Full Fraud Check
-    </Button>
-  )}
-</div>
-
+                      {fraudResults[order._id] && (
+                        <Button
+                          size="sm"
+                          className="mt-2"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFraudModal(order._id);
+                          }}
+                        >
+                          View Full Fraud Check
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -395,7 +347,7 @@ const res = await fetch(`/api/orders/${orderId}`)
 
       {/* Fraud Modal */}
       {showFraudModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
             <button
               onClick={() => setShowFraudModal(null)}
@@ -404,10 +356,7 @@ const res = await fetch(`/api/orders/${orderId}`)
               ✕
             </button>
             <FraudCheck
-              phone={
-                paginatedOrders.find((o) => o._id === showFraudModal)?.phone ||
-                ""
-              }
+              phone={paginatedOrders.find((o) => o._id === showFraudModal)?.phone || ""}
               setPhone={() => {}}
               handleFraudCheckByPhone={() => {}}
               loading={false}
@@ -419,6 +368,4 @@ const res = await fetch(`/api/orders/${orderId}`)
       )}
     </div>
   );
-};
-
-export default AllOrderTable;
+}
