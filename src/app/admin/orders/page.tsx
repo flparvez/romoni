@@ -4,7 +4,7 @@ import AllOrders from "./AllOrders";
 export const revalidate = 60;
 
 export default async function OrdersPage() {
-  const res = await fetch(`/api/orders/filter`, {
+  const res = await fetch(`${SITE_URL}/api/orders/filter`, {
     next: { revalidate: 60 },
   });
 

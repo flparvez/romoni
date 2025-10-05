@@ -48,7 +48,7 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
         transition={{ staggerChildren: 0.1 }}
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-[1px] sm:gap-4 md:gap-6"
       >
-        {products?.map((product) => (
+        {products?.slice(0, 12).map((product) => (
           <Link key={product._id} href={`/product/${product.slug}`}>
             <motion.div
               whileHover={{
