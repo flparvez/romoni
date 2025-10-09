@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import FileUpload from "@/components/Fileupload";
-import RichTextEditor from "@/components/RichTextEditor";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -12,7 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
+import RichTextEditor from "@/components/RichTextEditor";
 
+// ===== Interfaces =====
 interface IProductImage {
   url: string;
   fileId?: string;
@@ -42,6 +44,7 @@ interface ICategory {
   slug: string;
 }
 
+// ===== Component Start =====
 const CreateProduct = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -49,7 +52,10 @@ const CreateProduct = () => {
   const [images, setImages] = useState<IProductImage[]>([]);
   const [reviews, setReviews] = useState<IProductImage[]>([]);
   const [specifications, setSpecifications] = useState<ISpecification[]>([]);
-  const [variants, setVariants] = useState<IVariant[]>([]);
+  const [variants, setVariants] = useState<IVariant[]>([
+    { name: "Color", options: [] },
+    { name: "Size", options: [] },
+  ]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -59,8 +65,9 @@ const CreateProduct = () => {
     price: "",
     originalPrice: "",
     stock: "",
+    sku: "",
     categoryId: "",
-    brand: "",
+
     warranty: "",
     video: "",
     isFeatured: false,
@@ -71,12 +78,14 @@ const CreateProduct = () => {
     seoDescription: "",
     seoKeywords: "",
     isCombo: false,
+    productCode: "",
   });
 
+  // ===== Fetch Categories =====
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch("/api/categories", { next: { revalidate: 60 } });
         const data = await res.json();
         setCategories(data.categories || []);
       } catch (err) {
@@ -86,6 +95,7 @@ const CreateProduct = () => {
     fetchCategories();
   }, []);
 
+  // ===== Handlers =====
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target;
     if (target instanceof HTMLInputElement && target.type === "checkbox") {
@@ -99,24 +109,12 @@ const CreateProduct = () => {
     setFormData((prev) => ({ ...prev, [field]: checked }));
   };
 
-  const handleSpecChange = (i: number, key: keyof ISpecification, value: string) => {
-    setSpecifications((prev) => {
-      const updated = [...prev];
-      updated[i] = { ...updated[i], [key]: value };
-      return updated;
-    });
+  const handleDescriptionChange = (html: string) => {
+    setFormData((prev) => ({ ...prev, description: html }));
   };
+  const handleImagePick = async () => prompt("Please enter the image URL:");
 
-  const addSpecification = () => setSpecifications([...specifications, { key: "", value: "" }]);
-
-  const handleVariantChange = (i: number, key: keyof IVariant, value: string) => {
-    setVariants((prev) => {
-      const updated = [...prev];
-      updated[i] = { ...updated[i], [key]: value };
-      return updated;
-    });
-  };
-
+  // ===== Variants =====
   const handleVariantOptionChange = (vi: number, oi: number, key: keyof IVariantOption, value: string | number) => {
     setVariants((prev) => {
       const updated = [...prev];
@@ -128,57 +126,45 @@ const CreateProduct = () => {
     });
   };
 
-  const addVariant = () => {
-    const defaultPrice = Number(formData.price || 0);
-    const defaultStock = Number(formData.stock || 0);
-
-    setVariants([
-      ...variants,
-      {
-        name: "",
-        options: [{ value: "", price: defaultPrice, stock: defaultStock, sku: "" }],
-      },
-    ]);
-  };
-
-  const removeVariant = (index: number) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
-  };
-
   const addVariantOption = (vi: number) => {
-    const defaultPrice = Number(formData.price || 0);
-    const defaultStock = Number(formData.stock || 0);
-
     setVariants((prev) => {
       const updated = [...prev];
-      updated[vi].options.push({ value: "", price: defaultPrice, stock: defaultStock, sku: "" });
+      updated[vi].options.push({
+        value: "",
+        price: Number(formData.price) || 0,
+        stock: Number(formData.stock) || 0,
+        sku: formData.sku || "",
+      });
       return updated;
     });
   };
-  
+
   const removeVariantOption = (vi: number, oi: number) => {
-    setVariants(prev => {
+    setVariants((prev) => {
       const updated = [...prev];
       updated[vi].options = updated[vi].options.filter((_, i) => i !== oi);
       return updated;
     });
   };
 
-  const handleDescriptionChange = (html: string) => {
-    setFormData(prev => ({ ...prev, description: html }));
+  // ===== Specifications =====
+  const handleSpecChange = (i: number, key: keyof ISpecification, value: string) => {
+    setSpecifications((prev) => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [key]: value };
+      return updated;
+    });
   };
 
-  const handleImagePick = async () => {
-    const url = prompt("Please enter the image URL:");
-    return url;
-  };
+  const addSpecification = () => setSpecifications([...specifications, { key: "", value: "" }]);
 
+  // ===== Submit Handler =====
   const handleSubmit = async () => {
     const validSpecs = specifications.filter((s) => s.key && s.value);
     const selectedCategory = categories.find((c) => c._id === formData.categoryId);
 
     if (!formData.name || !formData.price || !selectedCategory || images.length === 0) {
-      toast.error("Please fill all required fields and upload at least one image.");
+      toast.error("দয়া করে সব প্রয়োজনীয় ঘর পূরণ করুন এবং অন্তত একটি ছবি আপলোড করুন।");
       return;
     }
 
@@ -198,56 +184,66 @@ const CreateProduct = () => {
           images,
           reviews,
           specifications: validSpecs,
-          // ✅ FIX: Correctly format category data for Mongoose model
           category: {
             _id: selectedCategory._id,
             name: selectedCategory.name,
             slug: selectedCategory.slug,
           },
-          variants: variants.map((v) => ({ name: v.name, options: v.options.filter((o) => o.value) })),
+          variants: variants.map((v) => ({
+            name: v.name,
+            options: v.options.filter((o) => o.value),
+          })),
         }),
       });
+
       const data = await res.json();
       setLoading(false);
 
       if (!res.ok) {
-        toast.error(data.error || "Failed to create product!");
+        toast.error(data.error || "প্রোডাক্ট তৈরি ব্যর্থ হয়েছে!");
         return;
       }
-      toast.success("Product created successfully!");
+      toast.success("✅ প্রোডাক্ট সফলভাবে তৈরি হয়েছে!");
       router.push("/admin/products");
     } catch (err) {
       console.error(err);
-      toast.error("Something went wrong!");
+      toast.error("কিছু ভুল হয়েছে!");
       setLoading(false);
     }
   };
 
-  return (
-    <div className="max-w-6xl mx-auto p-1 space-y-6">
-      <h1 className="text-3xl font-bold">Create Product</h1>
-      <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Basic Info</h2></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input name="name" value={formData.name} onChange={handleChange} placeholder="Product Name*" />
-    
-          <Input name="shortName" value={formData.shortName} onChange={handleChange} placeholder="Short Name" />
-          <Input name="brand" value={formData.brand} onChange={handleChange} placeholder="Brand" />
-          <Input name="warranty" value={formData.warranty} onChange={handleChange} placeholder="warranty" />
-          <Input name="video" value={formData.video} onChange={handleChange} placeholder="Video URL" />
-          <Input name="price" type="number" value={formData.price} onChange={handleChange} placeholder="Price*" />
+  // ===== Animation =====
+  const fadeIn = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
 
-          <Input name="stock" type="number" value={formData.stock} onChange={handleChange} placeholder="Stock" />
-          <Input name="rating" type="number" value={formData.rating} onChange={handleChange} placeholder="Rating" />
-          <Input name="tags" value={formData.tags} onChange={handleChange} placeholder="Tags (comma separated)" />
+  return (
+    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="max-w-6xl mx-auto p-4 space-y-6">
+      <h1 className="text-3xl font-bold text-gray-800">🛍️ নতুন প্রোডাক্ট তৈরি করুন</h1>
+
+      {/* ✅ Basic Info */}
+      <Card>
+        <CardHeader><h2 className="text-xl font-semibold">মৌলিক তথ্য</h2></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><Label>প্রোডাক্ট নাম*</Label><Input name="name" value={formData.name} onChange={handleChange} /></div>
+          <div><Label>ছোট নাম</Label><Input name="shortName" value={formData.shortName} onChange={handleChange} /></div>
+      
+          <div><Label>ওয়ারেন্টি</Label><Input name="warranty" value={formData.warranty} onChange={handleChange} /></div>
+          <div><Label>ভিডিও লিংক</Label><Input name="video" value={formData.video} onChange={handleChange} /></div>
+          <div><Label>মূল্য*</Label><Input name="price" type="number" value={formData.price} onChange={handleChange} /></div>
+          <div><Label>স্টক</Label><Input name="stock" type="number" value={formData.stock} onChange={handleChange} /></div>
+          <div><Label>SKU</Label><Input name="sku" value={formData.sku} onChange={handleChange} /></div>
+          <div><Label>Product Code (optional)</Label><Input name="productCode" value={formData.productCode} onChange={handleChange} /></div>
         </CardContent>
       </Card>
-      
+
+      {/* ✅ Category & Status */}
       <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Category & Status</h2></CardHeader>
+        <CardHeader><h2 className="text-xl font-semibold">ক্যাটাগরি ও স্ট্যাটাস</h2></CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-4 items-center">
           <Select onValueChange={(val) => setFormData((prev) => ({ ...prev, categoryId: val }))} value={formData.categoryId}>
-            <SelectTrigger className="w-full md:w-1/2"><SelectValue placeholder="Select Category*" /></SelectTrigger>
+            <SelectTrigger className="w-full md:w-1/2"><SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন*" /></SelectTrigger>
             <SelectContent>
               {categories.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}
             </SelectContent>
@@ -255,71 +251,53 @@ const CreateProduct = () => {
           <div className="flex gap-6">
             {["isFeatured", "isActive", "isCombo"].map((field) => (
               <div key={field} className="flex items-center gap-2">
-                <Switch checked={formData[field as keyof typeof formData] as boolean} onCheckedChange={(val) => handleSwitchChange(field as keyof typeof formData, val)} />
+                <Switch
+                  checked={formData[field as keyof typeof formData] as boolean}
+                  onCheckedChange={(val) => handleSwitchChange(field as keyof typeof formData, val)}
+                />
                 <Label>{field}</Label>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-      
+
+      {/* ✅ Variants Section */}
       <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Description</h2></CardHeader>
-        <CardContent>
-          <RichTextEditor
-            value={formData.description}
-            onChange={handleDescriptionChange}
-            onPickImage={handleImagePick}
-          />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Specifications</h2></CardHeader>
-        <CardContent className="space-y-3">
-          {specifications.map((s, i) => (
-            <div key={i} className="grid grid-cols-2 gap-2">
-              <Input value={s.key} onChange={(e) => handleSpecChange(i, "key", e.target.value)} placeholder="Key" />
-              <Input value={s.value} onChange={(e) => handleSpecChange(i, "value", e.target.value)} placeholder="Value" />
-            </div>
-          ))}
-          <Button type="button" onClick={addSpecification} size="sm">+ Add Specification</Button>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Variants</h2></CardHeader>
+        <CardHeader><h2 className="text-xl font-semibold">ভ্যারিয়েন্টস</h2></CardHeader>
         <CardContent className="space-y-4">
           {variants.map((variant, vi) => (
-            <div key={vi} className="space-y-2 border p-3 rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                <Input value={variant.name} onChange={(e) => handleVariantChange(vi, "name", e.target.value)} placeholder="Variant Name (e.g. Size, Color)" />
-                <Button variant="ghost" size="icon" onClick={() => removeVariant(vi)} className="text-red-500 hover:text-red-700">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+            <div key={vi} className="border p-4 rounded-xl bg-gray-50 space-y-3">
+              <Label className="font-medium">{variant.name}</Label>
               {variant.options.map((opt, oi) => (
-                <div key={oi} className="grid grid-cols-4 gap-2">
-                  <Input value={opt.value} onChange={(e) => handleVariantOptionChange(vi, oi, "value", e.target.value)} placeholder="Value" />
-                  <Input type="number" value={opt.price} onChange={(e) => handleVariantOptionChange(vi, oi, "price", e.target.value)} placeholder="Price" />
-                  <Input type="number" value={opt.stock} onChange={(e) => handleVariantOptionChange(vi, oi, "stock", e.target.value)} placeholder="Stock" />
-                  <div className="flex items-center gap-2">
-                    <Input value={opt.sku} onChange={(e) => handleVariantOptionChange(vi, oi, "sku", e.target.value)} placeholder="SKU" />
-                    <Button variant="ghost" size="icon" onClick={() => removeVariantOption(vi, oi)} className="text-red-500 hover:text-red-700">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                <div key={oi} className="flex flex-wrap md:flex-nowrap gap-2">
+                  <Input placeholder={`${variant.name} নাম`} value={opt.value} onChange={(e) => handleVariantOptionChange(vi, oi, "value", e.target.value)} />
+                  <Input type="number" placeholder="মূল্য" value={opt.price} onChange={(e) => handleVariantOptionChange(vi, oi, "price", e.target.value)} />
+                  <Input type="number" placeholder="স্টক" value={opt.stock} onChange={(e) => handleVariantOptionChange(vi, oi, "stock", e.target.value)} />
+                  <Input placeholder="SKU" value={opt.sku} onChange={(e) => handleVariantOptionChange(vi, oi, "sku", e.target.value)} />
+                  <Button variant="ghost" size="icon" onClick={() => removeVariantOption(vi, oi)} className="text-red-500 hover:text-red-700">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
-              <Button type="button" onClick={() => addVariantOption(vi)} size="sm">+ Add Option</Button>
+              {/* ✅ Only one button visible - adds one option per click */}
+              <Button type="button" onClick={() => addVariantOption(vi)} size="sm" variant="outline">
+                + নতুন {variant.name} যুক্ত করুন
+              </Button>
             </div>
           ))}
-          <Button type="button" onClick={addVariant} size="sm">+ Add Variant</Button>
         </CardContent>
       </Card>
-      
+      {/* ✅ বিবরণ */}
+       <Card>
+           <CardHeader><h2 className="text-xl font-semibold">বিবরণ</h2></CardHeader>
+           <CardContent>
+               <RichTextEditor value={formData.description} onChange={handleDescriptionChange} onPickImage={handleImagePick} />
+           </CardContent>
+       </Card>
+      {/* ✅ Images */}
       <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Product Images</h2></CardHeader>
+        <CardHeader><h2 className="text-xl font-semibold">প্রোডাক্ট ছবি</h2></CardHeader>
         <CardContent>
           <FileUpload
             initialImages={images.map((img) => img.url)}
@@ -327,21 +305,22 @@ const CreateProduct = () => {
           />
         </CardContent>
       </Card>
-      
-      <Card>
-        <CardHeader><h2 className="text-xl font-semibold">Review Images</h2></CardHeader>
+
+      {/* ✅ Reviews */}
+      {/* <Card>
+        <CardHeader><h2 className="text-xl font-semibold">রিভিউ ছবি</h2></CardHeader>
         <CardContent>
           <FileUpload
             initialImages={reviews.map((img) => img.url)}
             onChange={(urls: string[]) => setReviews(urls.map((url) => ({ url })))}
           />
         </CardContent>
-      </Card>
-      
+      </Card> */}
+
       <Button onClick={handleSubmit} disabled={loading} className="w-full mt-6">
-        {loading ? "Saving..." : "Create Product"}
+        {loading ? "সেভ হচ্ছে..." : "প্রোডাক্ট তৈরি করুন"}
       </Button>
-    </div>
+    </motion.div>
   );
 };
 

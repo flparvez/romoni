@@ -18,21 +18,7 @@ export interface IVariantOption {
 }
   
 
-export interface Product {
-  id: string
-  iname?: string
-  name: string
-  description: string
-  price: number
-  mprice?: number
-  stock: number
-  category: string
-  brand?: string
-  featured: boolean
-  imageUrl: string
-  createdAt: Date
-  updatedAt: Date
-}
+
  export interface Params {params : Promise<{id: string}>} 
 export interface Iproduct {
   _id: string // MongoDB ObjectId
