@@ -81,24 +81,6 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const currentQuantity = cartItem?.quantity || 0;
   const availableStock = stock - currentQuantity;
 
-  // ✅ Add to Cart
-  const handleAddToCart = () => {
-    const requiresVariant = product.variants && product.variants.length > 0;
-    const hasSelectedAllVariants =
-      Object.keys(selectedVariants).length === (product.variants?.length || 0);
-
-    if (requiresVariant && !hasSelectedAllVariants) {
-      toast.error('Please select an option before adding to cart.');
-      return;
-    }
-    if (availableStock <= 0) {
-      toast.error('Product is out of stock.');
-      return;
-    }
-    addProductToCart(product, quantity, selectedVariants);
-    toast.success('✅ Added to cart!');
-    router.push('/cart');
-  };
 
   // ✅ Buy Now
   const onBuyNow = () => {
@@ -303,17 +285,11 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             className="sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl z-50 p-3 lg:static lg:p-0 lg:border-none lg:shadow-none"
           >
             <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={handleAddToCart}
-                disabled={availableStock <= 0}
-                className="flex-1 py-3 px-4 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
-              >
-                <ShoppingCart className="inline-block mr-2" /> Add to Cart
-              </button>
+           
               <button
                 onClick={onBuyNow}
                 disabled={availableStock <= 0}
-                className="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+                className="flex-1 py-2 px-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
               >
                 {availableStock <= 0 ? 'Out of Stock' : 'Buy Now'}
               </button>

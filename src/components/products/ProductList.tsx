@@ -67,27 +67,32 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
                 </div>
               ) : null}
 
-              {/* Product Image */}
-              <div className="relative w-full aspect-square overflow-hidden">
-                {product.images?.[0]?.url && (
-                  <Image
-                    alt={product.name}
-                    src={product.images[0].url}
-                    fill
-                    className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    transformation={[
-                      {
-                        width: "600",
-                        height: "600",
-                        focus: "auto",
-                        quality: 80,
-                      },
-                    ]}
-                    loading="lazy"
-                  />
-                )}
-              </div>
+     {/* ✅ Product Image (Official ImageKit Next.js - Full uncropped display) */}
+<div className="relative w-full aspect-square overflow-hidden bg-white flex items-center justify-center">
+  {product.images?.[0]?.url ? (
+    <Image
+      alt={product.name}
+      src={product.images[0].url}
+      fill
+      className="object-contain transition-transform duration-300 ease-in-out hover:scale-105"
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      transformation={[
+        {
+          width: "600",
+          height: "600",
+          quality: 90,
+          format: "webp",
+        },
+      ]}
+      loading="lazy"
+    />
+  ) : (
+    <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-400 text-sm">
+      কোনো ছবি নেই
+    </div>
+  )}
+</div>
+
 
               {/* Product Info */}
               <div className="p-3 sm:p-4 text-center flex-1 flex flex-col justify-between">
@@ -108,7 +113,7 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
                 </div>
 
                 {/* Buttons */}
-                <div className="mt-3 flex flex-col gap-2">
+                <div className="mt-1 flex flex-col gap-2">
                   <motion.button
                     onClick={(e) => {
                       e.preventDefault();
@@ -117,9 +122,9 @@ const ProductList = ({ products }: { products?: IIProduct[] }) => {
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold py-2 rounded-md shadow hover:shadow-lg transition-all"
+                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold py-1 rounded-md shadow hover:shadow-lg transition-all"
                   >
-                    <ShoppingCart className="inline-block mr-1 h-4 w-4" />
+                    <ShoppingCart className="inline-block mr-1 h-4 w-3" />
                     কার্টে যোগ করুন
                   </motion.button>
 

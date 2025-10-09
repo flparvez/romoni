@@ -9,7 +9,6 @@ import { IProductImage } from "@/types/iproduct";
 import { Expand, ChevronLeft, ChevronRight } from "lucide-react";
 import { Image } from "@imagekit/next";
 
-// Import Swiper styles from node_modules
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/thumbs";
@@ -27,7 +26,7 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
   if (!images || images.length === 0) {
     return (
       <div className="w-full aspect-square bg-gray-100 rounded-xl flex items-center justify-center">
-        <p className="text-gray-500">No Image Available</p>
+        <p className="text-gray-500">কোনো ছবি পাওয়া যায়নি</p>
       </div>
     );
   }
@@ -35,6 +34,7 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
   return (
     <div className="w-full relative">
       <div className="relative w-full aspect-square group bg-white overflow-hidden rounded-lg shadow-sm">
+        {/* ✅ Main Product Image Slider */}
         <Swiper
           loop={images.length > 1}
           spaceBetween={10}
@@ -51,7 +51,7 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
         >
           {images.map((image, index) => (
             <SwiperSlide key={index}>
-              <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center bg-white">
                 <Image
                   fill
                   src={image.url}
@@ -59,13 +59,6 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
                   className="object-contain transition-transform duration-300 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
                   priority={index === 0}
-                  transformation={[{
-                    width: "1000",
-                    height: "1000",
-                    quality: 85,
-                    format: "webp",
-                    focus: "auto"
-                  }]}
                   loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
@@ -73,6 +66,7 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
           ))}
         </Swiper>
 
+        {/* ✅ Discount Badge */}
         {discount ? (
           <motion.div
             initial={{ scale: 0 }}
@@ -80,10 +74,11 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
             transition={{ delay: 0.2 }}
             className="absolute top-3 right-3 z-10 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg"
           >
-            {discount}% OFF
+            {discount}% ছাড়
           </motion.div>
         ) : null}
 
+        {/* ✅ Navigation Buttons */}
         {images.length > 1 && (
           <>
             <button className="custom-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white">
@@ -95,18 +90,19 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
           </>
         )}
 
-        {/* ✅ MODIFIED: Fullscreen button is now always visible on mobile (lg and smaller) */}
+        {/* ✅ Fullscreen Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setFullscreen(true)}
           className="absolute bottom-3 right-3 z-20 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center transition-opacity opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-          aria-label="View fullscreen"
+          aria-label="Fullscreen"
         >
           <Expand className="w-5 h-5 text-gray-800" />
         </motion.button>
       </div>
 
+      {/* ✅ Thumbnail Slider */}
       {images.length > 1 && (
         <div className="mt-3">
           <Swiper
@@ -119,20 +115,20 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
           >
             {images.map((image, index) => (
               <SwiperSlide key={index} className="cursor-pointer rounded-md overflow-hidden">
-                <motion.div 
-                  whileHover={{ scale: 1.05 }} 
-                  className="relative w-full aspect-square bg-gray-100"
-                >
+                <motion.div whileHover={{ scale: 1.05 }} className="relative w-full aspect-square bg-gray-100">
                   <Image
                     fill
                     src={image.url}
                     alt={`Thumbnail ${index + 1}`}
                     className="object-contain"
                     sizes="100px"
-                    transformation={[{ width: "200", height: "200", quality: 75, format: "webp" }]}
                     loading="lazy"
                   />
-                  <div className={`absolute inset-0 transition-all duration-300 ${activeIndex === index ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}`} />
+                  <div
+                    className={`absolute inset-0 transition-all duration-300 ${
+                      activeIndex === index ? "ring-2 ring-blue-500" : "hover:ring-2 hover:ring-gray-300"
+                    }`}
+                  />
                 </motion.div>
               </SwiperSlide>
             ))}
@@ -140,37 +136,47 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
         </div>
       )}
 
-      {/* ✅ MODIFIED: Fullscreen modal now covers the entire screen on mobile */}
+      {/* ✅ Fullscreen Viewer with Swipe Navigation */}
       <AnimatePresence>
         {fullscreen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-0 lg:p-4"
-            onClick={() => setFullscreen(false)}
+            className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center"
           >
-            <div className="relative w-full h-full lg:max-w-5xl lg:max-h-[90vh]">
-              <Image
-                src={images[activeIndex].url}
-                alt={`Fullscreen image ${activeIndex + 1}`}
-                fill
-                className="object-contain"
-                sizes="100vw"
-                transformation={[{ width: "1600", quality: 90, format: "webp" }]}
-                loading="eager"
-              />
-              <button
-                className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/80 transition-colors z-10"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent modal from closing when clicking the button
-                  setFullscreen(false);
-                }}
-                aria-label="Close fullscreen"
-              >
-                ✕
-              </button>
-            </div>
+            <Swiper
+              initialSlide={activeIndex}
+              spaceBetween={20}
+              navigation
+              modules={[Navigation]}
+              onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+              className="w-full h-full"
+            >
+              {images.map((image, index) => (
+                <SwiperSlide key={index}>
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <Image
+                      fill
+                      src={image.url}
+                      alt={`Fullscreen image ${index + 1}`}
+                      className="object-contain"
+                      sizes="100vw"
+                      loading="eager"
+                    />
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            {/* ✅ Close Button */}
+            <button
+              className="absolute top-4 right-4 text-white bg-black/60 rounded-full p-3 hover:bg-black/80 transition z-50"
+              onClick={() => setFullscreen(false)}
+              aria-label="Close fullscreen"
+            >
+              ✕
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -179,4 +185,3 @@ const ImageSlider = ({ images, discount }: ImageSliderProps) => {
 };
 
 export default ImageSlider;
-
