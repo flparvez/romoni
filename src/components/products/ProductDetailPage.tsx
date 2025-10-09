@@ -84,14 +84,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   // ✅ Buy Now
   const onBuyNow = () => {
-    const requiresVariant = product.variants && product.variants.length > 0;
-    const hasSelectedAllVariants =
-      Object.keys(selectedVariants).length === (product.variants?.length || 0);
-
-    if (requiresVariant && !hasSelectedAllVariants) {
-      toast.error('Please select an option to buy.');
-      return;
-    }
+    
     if (availableStock <= 0) {
       toast.error('Product is out of stock.');
       return;
