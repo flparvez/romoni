@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
       displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price),
       
-      originalPrice: body.originalPrice || 0,
+      originalPrice: body.originalPrice || body.displayPrice + 250,
       discount: body.discount || 0,
       stock: Number(body.stock || 0),
       category: body.category,
