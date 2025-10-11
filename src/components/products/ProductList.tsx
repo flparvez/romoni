@@ -1,154 +1,58 @@
-"use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { IIProduct } from "@/types/iproduct";
-import { Image } from "@imagekit/next";
-import { useAddToCart } from "@/hooks/AddToCart";
-import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
+import React, { Suspense } from 'react';
+import { ProductCard } from './ProductCard';
+import { ProductSkeleton } from '../skeletons';
+import { IIProduct } from '@/types/iproduct';
+import { PackageX } from 'lucide-react';
+import { SITE_URL } from '@/types/product';
 
-const ProductList = ({ products }: { products?: IIProduct[] }) => {
-  const { addProductToCart } = useAddToCart();
-  const route = useRouter();
 
-  if (!products || products.length === 0) {
+async function getProductIds(): Promise<string[]> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/products`, {
+      next: { revalidate: 60 }, // Cache for 1 minute
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch products');
+    const products = await res.json();
+
+    return products?.products.map((product: IIProduct) => product._id);
+  } catch (error) {
+    console.error('API Error:', error);
+    return []; // Return empty array on error
+  }
+}
+
+export default async function ProductList() {
+  const productIds = await getProductIds();
+
+  if (productIds.length === 0) {
     return (
-      <section className="w-full bg-gray-50 py-12 px-4 text-center">
-        <h2 className="text-2xl font-bold text-gray-700">
-          No products available.
-        </h2>
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto flex flex-col items-center justify-center text-center text-gray-500">
+          <PackageX size={48} className="mb-4" />
+          <h2 className="text-2xl font-semibold">No Products Found</h2>
+          <p className="mt-2 text-sm">Please check back later or try refreshing the page.</p>
+        </div>
       </section>
     );
   }
 
-  const handleAddToCartAndNavigate = (product: IIProduct) => {
-    addProductToCart(product, 1, {});
-    route.push("/checkout");
-  };
-
-  return (
-    <section className="w-full bg-gray-50 py-6 px-2 sm:px-4 md:py-12 lg:px-8">
-      <div className="text-center mb-6">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="text-lg font-semibold text-gray-700"
-        >
-          Latest Products
-        </motion.p>
+  return ( 
+    <section className="bg-white py-4 sm:py-8">
+      <div className="container mx-auto px-1">
+        <div className="text-center mb-2">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">Our Latest Products</h2>
+          <p className="mt-2 text-base leading-7 text-gray-600">Discover the newest additions to our collection.</p>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-x-0 gap-y-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+          {productIds.map((id) => (
+            <Suspense key={id} fallback={<ProductSkeleton />}>
+              <ProductCard id={id} />
+            </Suspense>
+          ))}
+        </div>
       </div>
-
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ staggerChildren: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-[1px] sm:gap-4 md:gap-6"
-      >
-        {products?.slice(0, 12).map((product) => (
-          <Link key={product._id} href={`/product/${product.slug}`}>
-            <motion.div
-              whileHover={{
-                scale: 1.03,
-                boxShadow:
-                  "0 15px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
-                transition: { duration: 0.2 },
-              }}
-              whileTap={{ scale: 0.97 }}
-              className="bg-gradient-to-b from-sky-300 to-orange-200  rounded-md overflow-hidden relative cursor-pointer flex flex-col transition-all"
-            >
-              {/* Discount Badge */}
-              {product?.discount ? (
-                <div className="absolute top-2 right-2 z-10 bg-gradient-to-br from-red-600 to-orange-500 text-white text-xs sm:text-sm font-bold px-2 py-1 rounded-md shadow-md">
-                  -{product.discount}% OFF
-                </div>
-              ) : null}
-
-     {/* ✅ Product Image (Official ImageKit Next.js - Full uncropped display) */}
-<div className="relative w-full aspect-square overflow-hidden bg-white flex items-center justify-center">
-  {product.images?.[0]?.url ? (
-    <Image
-      alt={product.name}
-      src={product.images[0].url}
-      fill
-      className="object-contain transition-transform duration-300 ease-in-out hover:scale-105"
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-      transformation={[
-        {
-          width: "600",
-          height: "600",
-          quality: 90,
-          format: "webp",
-        },
-      ]}
-      loading="lazy"
-    />
-  ) : (
-    <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-400 text-sm">
-      কোনো ছবি নেই
-    </div>
-  )}
-</div>
-
-
-              {/* Product Info */}
-              <div className="p-3 sm:p-4 text-center flex-1 flex flex-col justify-between">
-                <h3 className="text-sm sm:text-base font-semibold text-gray-800 line-clamp-2 hover:text-blue-600 transition-colors">
-                  {product.name}
-                </h3>
-
-                <div className="mt-2 sm:mt-3">
-                  <span className="text-lg font-bold text-purple-700">
-                    ৳{product.displayPrice.toLocaleString()}
-                  </span>
-                  {product.originalPrice &&
-                    product.originalPrice > product.price && (
-                      <span className="ml-2 text-sm text-gray-400 line-through">
-                        ৳{product.originalPrice.toLocaleString()}
-                      </span>
-                    )}
-                </div>
-
-                {/* Buttons */}
-                <div className="mt-1 flex flex-col gap-2">
-                  <motion.button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      addProductToCart(product, 1, {});
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold py-1 rounded-md shadow hover:shadow-lg transition-all"
-                  >
-                    <ShoppingCart className="inline-block mr-1 h-4 w-3" />
-                    কার্টে যোগ করুন
-                  </motion.button>
-
-                  <motion.button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleAddToCartAndNavigate(product);
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-semibold py-2 rounded-md shadow hover:shadow-lg transition-all"
-                  >
-                    <ShoppingCart className="inline-block mr-1 h-4 w-4" />
-                    এখনই অর্ডার করুন
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </Link>
-        ))}
-      </motion.div>
     </section>
   );
-};
-
-export default ProductList;
+}
