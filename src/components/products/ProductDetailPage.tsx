@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { YouTubeEmbed } from '@next/third-parties/google';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ import { useAddToCart } from '@/hooks/AddToCart';
 import { useCart } from '@/hooks/useCart';
 
 import RelatedProducts from './ProductByCategory';
+import { ProductSkeleton } from '../skeletons';
 
 interface ProductDetailPageProps {
   product: IIProduct;
@@ -377,11 +378,13 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
       {/* Related Products - mobile */}
       <div className="block sm:hidden mt-6">
-        <RelatedProducts
+      <Suspense fallback={<ProductSkeleton />}>
+          <RelatedProducts
           products={products}
           slug={product.category.slug}
           excludeProductId={product._id}
         />
+      </Suspense>
       </div>
 
       {/* Floating Facebook */}

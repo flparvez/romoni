@@ -8,6 +8,7 @@ import { useAddToCart } from "@/hooks/AddToCart";
 import Link from "next/link";
 import { ShoppingCart, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function ProductCardUI({ product }: { product: IIProduct }) {
   const { addProductToCart } = useAddToCart();
@@ -24,7 +25,7 @@ export function ProductCardUI({ product }: { product: IIProduct }) {
     e.preventDefault();
     e.stopPropagation();
     addProductToCart(product, 1, {});
-    // Add toast notification here for better UX
+    toast.success(product.shortName + " added to cart!");
   };
 
   return (
