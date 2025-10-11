@@ -7,6 +7,8 @@ import { SITE_URL } from "@/types/product";
 import ProductFilter from "@/components/filter/Fiter";
 import HeroSection from "@/components/home/HeaderSection";
 import Footer from "@/components/Footer";
+import { Suspense } from "react";
+import { ProductSkeleton } from "@/components/skeletons";
 
 export const revalidate = 60; // ISR: প্রতি 60s পরে data re-generate হবে
 
@@ -28,8 +30,10 @@ export default async function Homepage() {
       <h2 className="text-2xl font-bold mt-4 text-center from-teal-600 to-cyan-600">Top Categories</h2>
       <CategorySlider categories={categories} />
 
-      <ProductList products={products} />
-
+      <Suspense fallback={<ProductSkeleton />}>
+     
+        <ProductList />
+      </Suspense>
       <ProductFilter categories={categories} />
 
                   <Footer />
