@@ -115,11 +115,13 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
+          <Suspense fallback={<ProductSkeleton />}>
             <RelatedProducts
               products={products}
               slug={product.category.slug}
               excludeProductId={product._id}
             />
+            </Suspense>
           </motion.div>
         </div>
 
