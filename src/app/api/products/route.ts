@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     await connectToDatabase();
 
-    if (!body.name  || !body.images?.length || !body.category?._id) {
+    if (!body.name   || !body.category?._id || !body.price || !body.images ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -25,9 +25,8 @@ export async function POST(req: NextRequest) {
       description: body.description || "",
       price: Number(body.price),
 
-      displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price),
-      
-      originalPrice: body.originalPrice || body.displayPrice + 250,
+      displayPrice: body.displayPrice || body.price,
+      originalPrice: body?.originalPrice || body.price + 250,
       discount: body.discount || 0,
       stock: Number(body.stock || 0),
       category: body.category,

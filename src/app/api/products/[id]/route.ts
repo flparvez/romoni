@@ -91,7 +91,7 @@ displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price)
       rating: safeNumber(body.rating, 0),
       lastUpdatedIndex: body.lastUpdatedIndex ? safeNumber(body.lastUpdatedIndex) : undefined,
       advanced: safeNumber(body.advanced, 100),
-
+      sku: body.sku || "",
       // Boolean Fields
       isFreeDelivery: Boolean(body.isFreeDelivery ?? false),
       isCombo: Boolean(body.isCombo ?? false),
