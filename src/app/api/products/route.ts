@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
-
+import slugify from "slugify";
 // ==========================
 // POST → Create New Product
 // ==========================
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     await connectToDatabase();
 
-    if (!body.name || !body.price || !body.images?.length || !body.category?._id) {
+    if (!body.name  || !body.images?.length || !body.category?._id) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const product = new Product({
       name: body.name,
-      slug: body.slug || body.name.toLowerCase().replace(/\s+/g, "-"),
+      slug: slugify(body.name, { lower: true, strict: true }),
       shortName: body.shortName || "",
       description: body.description || "",
       price: Number(body.price),
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       discount: body.discount || 0,
       stock: Number(body.stock || 0),
       category: body.category,
-      brand: body.brand || "",
+      
       video: body.video || "",
       lastUpdatedIndex: body.lastUpdatedIndex || "",
       warranty: body.warranty || "7 day replacement warranty",
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       rating: Number(body.rating || 0),
       isFeatured: Boolean(body.isFeatured),
       isActive: Boolean(body.isActive ?? true),
-
+      sku: body.sku || "", 
   // ✅ Add variants
   variants: Array.isArray(body.variants)
     ? body.variants.map((v: any) => ({
