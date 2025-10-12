@@ -78,7 +78,7 @@ const CreateProduct = () => {
     seoDescription: "",
     seoKeywords: "",
     isCombo: false,
-    productCode: "",
+
   });
 
   // ===== Fetch Categories =====
@@ -234,7 +234,7 @@ const CreateProduct = () => {
           <div><Label>মূল্য*</Label><Input name="price" type="number" value={formData.price} onChange={handleChange} /></div>
           <div><Label>স্টক</Label><Input name="stock" type="number" value={formData.stock} onChange={handleChange} /></div>
           <div><Label>SKU</Label><Input name="sku" value={formData.sku} onChange={handleChange} /></div>
-          <div><Label>Product Code (optional)</Label><Input name="productCode" value={formData.productCode} onChange={handleChange} /></div>
+          
         </CardContent>
       </Card>
 

@@ -55,6 +55,7 @@ const ProductSchema = new Schema<IProductDocument>(
     slug: { type: String, required: true, unique: true, index: true },
     shortName: { type: String, trim: true },
     description: { type: String, default: "" },
+    sku: { type: String },
     category: new Schema({
         _id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
         name: { type: String },

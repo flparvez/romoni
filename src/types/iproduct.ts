@@ -41,6 +41,7 @@ export interface IProduct {
   // Basic info
   name: string;
   slug: string;
+  sku: string;
   shortName?: string;
   description?: string;
 displayPrice: number
@@ -51,7 +52,7 @@ displayPrice: number
   price: number;
   originalPrice: number;
   discount?: number;
-  isFreeDelivery?: boolean;
+  isFreeDelivery: boolean;
 
   // Media
   images: IProductImage[];
@@ -101,7 +102,7 @@ export interface IIProduct {
   slug: string;
   shortName?: string;
   description?: string;
-
+sku: string;
   // Category relation
   category: ICategoryRef;
 displayPrice: number

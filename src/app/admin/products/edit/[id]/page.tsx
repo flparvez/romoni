@@ -52,8 +52,9 @@ interface IFormData {
   price: string;
   originalPrice: string;
   stock: string;
+  sku: string;
   categoryId: string;
-  brand: string;
+
   warranty: string;
   video: string;
   isFeatured: boolean;
@@ -96,7 +97,7 @@ const EditProduct = () => {
     originalPrice: "",
     stock: "0",
     categoryId: "",
-    brand: "",
+
     warranty: "",
     video: "",
     isFeatured: false,
@@ -109,6 +110,7 @@ const EditProduct = () => {
     isCombo: false,
     isFreeDelivery: false,
     sold: "0",
+    sku: "",
     popularityScore: "0",
     status: "ACTIVE",
     lastUpdatedIndex: "1",
@@ -144,8 +146,9 @@ const EditProduct = () => {
           originalPrice: String(product.originalPrice || ""),
           stock: String(product.stock ?? "0"),
           categoryId: product.category?._id || "",
-          brand: product.brand || "",
+       
           warranty: product.warranty || "",
+          sku: product.sku || "",
           video: product.video || "",
           isFeatured: product.isFeatured ?? false,
           isActive: product.isActive ?? true,
@@ -273,6 +276,7 @@ const EditProduct = () => {
         stock: Number(formData.stock || 0),
         rating: Number(formData.rating || 0),
         sold: Number(formData.sold || 0),
+        sku: formData.sku || "",
         popularityScore: Number(formData.popularityScore || 0),
         lastUpdatedIndex: Number(formData.lastUpdatedIndex || 0),
         advanced: Number(formData.advanced || 100),
@@ -325,8 +329,9 @@ const EditProduct = () => {
           <div><Label>ছোট নাম</Label><Input name="shortName" value={formData.shortName} onChange={handleChange} /></div>
           <div><Label>মূল্য*</Label><Input name="price" type="number" value={formData.price} onChange={handleChange} /></div>
           <div><Label>আসল মূল্য</Label><Input name="originalPrice" type="number" value={formData.originalPrice} onChange={handleChange} /></div>
-          <div><Label>স্টক</Label><Input name="stock" type="number" value={formData.stock} onChange={handleChange} /></div>
-          <div><Label>ব্র্যান্ড</Label><Input name="brand" value={formData.brand} onChange={handleChange} /></div>
+          <div><Label>স্টক</Label><Input name="stock" type="number" value={formData.stock} onChange={handleChange} /></div> 
+          <div><Label>SKU</Label><Input name="sku" type="string" value={formData.sku} onChange={handleChange} /></div>
+    
           <div><Label>ওয়ারেন্টি</Label><Input name="warranty" value={formData.warranty} onChange={handleChange} /></div>
           <div><Label>ভিডিও লিংক</Label><Input name="video" value={formData.video} onChange={handleChange} /></div>
         </CardContent>
