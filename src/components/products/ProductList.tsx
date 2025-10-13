@@ -1,58 +1,68 @@
-import React, { Suspense } from 'react';
-import { ProductCard } from './ProductCard';
-import { ProductSkeleton } from '../skeletons';
-import { IIProduct } from '@/types/iproduct';
-import { PackageX } from 'lucide-react';
-import { SITE_URL } from '@/types/product';
+// app/(shop)/ProductList.tsx or components/ProductList.tsx
+import React from "react";
+import Link from "next/link";
+import { Image } from "@imagekit/next";
+import { PackageX, Star } from "lucide-react";
+import { SITE_URL } from "@/types/product";
+import { IIProduct } from "@/types/iproduct";
 
+import { ProductCardUI } from "./ProductCard";
 
-async function getProductIds(): Promise<string[]> {
+type ApiResponse = {
+  products: IIProduct[];
+};
+
+async function getProducts(): Promise<IIProduct[]> {
   try {
     const res = await fetch(`${SITE_URL}/api/products`, {
-      next: { revalidate: 60 }, // Cache for 1 minute
+      next: { revalidate: 60, tags: ["products"] },
+      // cache: 'force-cache' is default with revalidate above
     });
-
-    if (!res.ok) throw new Error('Failed to fetch products');
-    const products = await res.json();
-
-    return products?.products.map((product: IIProduct) => product._id);
-  } catch (error) {
-    console.error('API Error:', error);
-    return []; // Return empty array on error
+    if (!res.ok) throw new Error("Failed to fetch products");
+    const data: ApiResponse = await res.json();
+    return Array.isArray(data?.products) ? data.products : [];
+  } catch (e) {
+    console.error("Product API Error:", e);
+    return [];
   }
 }
 
 export default async function ProductList() {
-  const productIds = await getProductIds();
+  const products = await getProducts();
 
-  if (productIds.length === 0) {
+  if (!products.length) {
     return (
-      <section className="bg-gray-50 py-20">
-        <div className="container mx-auto flex flex-col items-center justify-center text-center text-gray-500">
+      <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-gray-50 py-14">
+        <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-center text-center text-gray-500">
           <PackageX size={48} className="mb-4" />
           <h2 className="text-2xl font-semibold">No Products Found</h2>
-          <p className="mt-2 text-sm">Please check back later or try refreshing the page.</p>
+          <p className="mt-2 text-sm">Please check back later.</p>
         </div>
       </section>
     );
   }
 
-  return ( 
-    <section className="bg-white py-4 sm:py-8">
-      <div className="container mx-auto px-1">
-        <div className="text-center mb-2">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">Our Latest Products</h2>
-          <p className="mt-2 text-base leading-7 text-gray-600">Discover the newest additions to our collection.</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-x-0 gap-y-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-          {productIds.map((id) => (
-            <Suspense key={id} fallback={<ProductSkeleton />}>
-              <ProductCard id={id} />
-            </Suspense>
-          ))}
-        </div>
+  return (
+    <section
+      className="
+        relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]
+        w-screen bg-white
+      "
+    >
+      {/* Full-bleed, zero-gap grid with crisp dividers */}
+      <div
+        className="
+          grid w-full
+          grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6
+          gap-0
+          border-l border-t border-gray-100
+        "
+      >
+        {products.slice(0, 18).map((p) => (
+          <ProductCardUI key={p._id} product={p} />
+        ))}
       </div>
     </section>
   );
 }
+
