@@ -197,10 +197,10 @@ const CheckoutPage = () => {
               <div className="space-y-2">
                 <h4 className="font-semibold text-lg text-gray-800">ডেলিভারি চার্জ</h4>
                 <div className="flex flex-col gap-2 w-full">
-                  {Object.entries({ InsideDhaka: deliveryCharges.ctg, OutsideDhaka: deliveryCharges.outsideCtg }).map(([key, val]) => (
+                  {Object.entries({ insideCtg: deliveryCharges.ctg, outsideCtg: deliveryCharges.outsideCtg }).map(([key, val]) => (
                     <label key={key} className="flex items-center gap-3 border p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                       <input type="radio" name="delivery" value={key} defaultChecked={key === "insideCtg"} onChange={handleDeliveryChange} className="text-blue-600 focus:ring-blue-500" />
-                      <span>{key === "insideCtg" ? "Inside Ctg" : "Outside Ctg"}: <span className="font-bold">{val} ৳</span></span>
+                      <span>{key === "insideCtg" ? "Inside Dhaka" : "Outside Dhaka"}: <span className="font-bold">{val} ৳</span></span>
                     </label>
                   ))}
                 </div>
