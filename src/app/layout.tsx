@@ -177,8 +177,9 @@ export default function RootLayout({
  {/* ✅ Google Site Verification */}
         <meta
           name="google-site-verification"
-          content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0"
+          content="W61N9BrCkSVNPpJ2aWgU7NdLojqoJGtAp5CzJy7odjA"
         />
+        
         {/* JSON-LD */}
         <script
           type="application/ld+json"
