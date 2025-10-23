@@ -46,7 +46,8 @@ const getAllProducts = async (): Promise<IIProduct[]> => {
 };
 
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
-  const product = await getProduct(params.slug);
+    const { slug } = await params;
+  const product = await getProduct(slug);
   if (!product) {
     return {
       title: "Product Not Found",
@@ -93,8 +94,9 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
 };
 
 const ProductDetailsPage = async ({ params }: Props) => {
+  const { slug } = await params;
   const [product, products] = await Promise.all([
-    getProduct(params.slug),
+    getProduct(slug),
     getAllProducts(),
   ]);
 
