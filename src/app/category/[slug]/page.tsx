@@ -14,9 +14,16 @@ interface Props {
 export async function generateStaticParams() {
   try {
     const res = await fetch(`${SITE_URL}/api/categories`, {
-      next: { revalidate: 60 }, // ISR support for categories too
+      next: { revalidate: 60 },
     });
-    const { categories } = await res.json();
+
+    if (!res.ok) {
+      console.error("Failed to fetch categories");
+      return [];
+    }
+
+    const data = await res.json();
+    const categories = Array.isArray(data?.categories) ? data.categories : [];
 
     return categories.map((cat: { slug: string }) => ({
       slug: cat.slug,
@@ -26,6 +33,7 @@ export async function generateStaticParams() {
     return [];
   }
 }
+
 
 // ✅ ISR: Page will be cached & revalidated every 60s
 export const revalidate = 60;
@@ -58,7 +66,7 @@ const ProductByCategory = async ({ params }: Props) => {
   );
 
   // ✅ Format category title
-  const categoryTitle = slug.replace(/-/g, " ").toUpperCase();
+const categoryTitle = slug ? slug.replace(/-/g, " ").toUpperCase() : "CATEGORY";
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -66,7 +74,7 @@ const ProductByCategory = async ({ params }: Props) => {
         {/* Intro */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {categoryTitle}
+            {categoryTitle} - A1 Romoni
           </h1>
           <p className="mt-2 text-gray-600">
             Explore our collection of {categoryTitle} products.
