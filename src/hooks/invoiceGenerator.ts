@@ -10,7 +10,7 @@ export const generateInvoicePdf = (order: IOrder) => {
   const shopName = "A1 Romoni";
   const shopAddress = "Elephant Road, Dhaka, Bangladesh";
   const shopPhone = "01608257876";
-  const shopEmail = "contact@uniquestorebd.store";
+  const shopEmail = "contact@a1romoni.xyz";
   const currency = "Tk";
 
   const shopLogo =

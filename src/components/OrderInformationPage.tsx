@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
   window.dataLayer = window.dataLayer || [];
 
   const userData = {
-    email_address: "contact@uniquestorebd.store", // Add if you collect email later
+    email_address: "contact@a1romoni.xyz", // Add if you collect email later
     phone_number: order.phone || "",
     first_name: order.fullName?.split(" ")[0] || "",
     last_name: order.fullName?.split(" ")[1] || "",
@@ -59,7 +59,7 @@ if (typeof window !== "undefined") {
           <Image
             width={80}
             height={80}
-           src="https://ik.imagekit.io/pemifp53t/1758798108980-481999217_122151293954497451_784184120423218190_n__1__2U8VXOFIX.jpg?updatedAt=1758798111309"
+           src="https://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
             alt="Logo"
             className="w-20 h-20 rounded-full shadow-lg"
           />
@@ -222,7 +222,7 @@ if (typeof window !== "undefined") {
 
       {/* Actions */}
       <div className="flex flex-col md:flex-row gap-4 mt-8 mb-10">
-        <Link href={"https://www.facebook.com/uniquestorebd23/"  } target="_blank" rel="noopener noreferrer"
+        <Link href={"https://www.facebook.com/a1ladiesfr/"  } target="_blank" rel="noopener noreferrer"
           className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md"
         >
           Continue Shopping

@@ -20,12 +20,12 @@ const Footer = () => {
             {/* Social Icons */}
             <div className="flex justify-center md:justify-start space-x-4 mt-4">
               <Link
-                href="https://www.facebook.com/uniquestorebd23"
+                href="https://www.facebook.com/a1ladiesfr/"
                 target="_blank"
               >
                 <Facebook className="w-6 h-6 hover:text-blue-500 transition" />
               </Link>
-              <Link href="https://www.instagram.com/uniquestorebd" target="_blank">
+              <Link href="https://www.facebook.com/a1ladiesfr/" target="_blank">
                 <Instagram className="w-6 h-6 hover:text-pink-500 transition" />
               </Link>
             </div>
