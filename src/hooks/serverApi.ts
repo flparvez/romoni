@@ -1,6 +1,6 @@
 // lib/serverApi.ts
 
-export const SITE_URL = "https://a1romoni.vercel.app";
+export const SITE_URL = "https://a1romoni.xyz";
 // export const SITE_URL = "http://localhost:3000";
 
 

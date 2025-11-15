@@ -24,9 +24,9 @@ const geistMono = Geist_Mono({
 
 // ✅ Business Info
 const shopName = "A1 Ladies Collection - Romoni";
-const shopEmail = "support@romoni.store";
+const shopEmail = "contact@romoni.store";
 const shopPhone = "+8801608257876";
-const baseUrl = "https://a1romoni.vercel.app";
+const baseUrl = "https://a1romoni.xyz";
 
 // ✅ Metadata (SEO Optimized)
 export const metadata: Metadata = {
@@ -35,12 +35,13 @@ export const metadata: Metadata = {
     template: "%s | A1 Romoni",
   },
   description:
-    "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery.",
+    "Buy Authentic Products From  All In One Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery. A1 Romoni.",
   keywords: [
     "A1 Ladies Collection",
     "Romoni",
     "Ladies Collection",
     "Romoni Ladies Collection",
+    "All In One Ladies Collection",
   ],
   authors: [{ name: shopName, url: baseUrl }],
   creator: shopName,
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
     siteName: shopName,
     title: "A1 Ladies Collection - Romoni",
     description:
-      "Buy Authentic A1 Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery.",
+      "Buy Authentic Products From  All In One Ladies Collection in Bangladesh. Fashion Ladies Collection And Fast Delivery. A1 Romoni.",
     images: [
       {
         url: `/og-image.jpg`,
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    creator: "@UniqueStoreBD",
+    creator: "@Projukti Solution Bd",
     title: "A1 Ladies Collection - Romoni",
     description:
       "Shop authentic products in Bangladesh – Smart Watches, TWS earbuds, home appliances, gadgets & more.",
@@ -174,11 +175,7 @@ export default function RootLayout({
           type="image/webp"
         />
 
- {/* ✅ Google Site Verification */}
-        <meta
-          name="google-site-verification"
-          content="5OMe3R7qnnZDzzl1tmgyBi4B15zyX0fzh-dLDUPfAA0"
-        />
+
      
         {/* JSON-LD */}
         <script
@@ -199,7 +196,7 @@ export default function RootLayout({
         </Providers>
 
         {/* GTM */}
-        <GoogleTagManager gtmId="GTM-5ZLXGQZG" />
+        <GoogleTagManager gtmId="GTM-P36LJGZL" />
       </body>
     </html>
   );
