@@ -7,10 +7,65 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-// Assuming FileUpload component exists at this path
-import FileUpload from "@/components/Fileupload"; 
 import { toast } from "sonner";
-import Link from "next/link";
+import { UploadCloud, X } from "lucide-react";
+
+// --- Placeholder FileUpload Component ---
+// This is added to resolve potential import errors. Replace with your actual component.
+const FileUpload = ({
+  initialImages,
+  onChange,
+}: {
+  initialImages: string[];
+  onChange: (urls: string[]) => void;
+}) => {
+  const [previews, setPreviews] = useState(initialImages);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+      const allPreviews = [...previews, ...newPreviews];
+      setPreviews(allPreviews);
+      onChange(allPreviews);
+      toast.info("Placeholder: Files are not actually uploaded.");
+    }
+  };
+
+  const removeImage = (indexToRemove: number) => {
+    const updatedPreviews = previews.filter((_, index) => index !== indexToRemove);
+    setPreviews(updatedPreviews);
+    onChange(updatedPreviews);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+        {previews.map((url, index) => (
+          <div key={index} className="relative aspect-square rounded-md overflow-hidden">
+            <img src={url} alt={`preview ${index}`} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 h-6 w-6 flex items-center justify-center"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+        <Label
+          htmlFor="file-upload-dialog"
+          className="aspect-square rounded-md border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+        >
+          <UploadCloud className="w-8 h-8 text-gray-400" />
+          <span className="mt-2 text-sm text-gray-500">Upload</span>
+        </Label>
+        <Input id="file-upload-dialog" type="file" className="hidden" multiple onChange={handleFileChange} />
+      </div>
+    </div>
+  );
+};
+// --- End of Placeholder ---
 
 interface IImage {
   url: string;
@@ -21,7 +76,7 @@ interface Category {
   _id: string;
   name: string;
   slug: string;
-  lastIndex?: number; // ✅ lastIndex added to type
+  lastIndex?: number;
   images?: IImage[];
   parentCategory?: { _id: string; name: string } | null;
 }
@@ -33,7 +88,6 @@ export default function EditCategory() {
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Fetch categories
   const fetchCategories = async () => {
     try {
       const res = await fetch("/api/categories");
@@ -48,7 +102,6 @@ export default function EditCategory() {
     fetchCategories();
   }, []);
 
-  // Handle edit submit
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
@@ -61,9 +114,9 @@ export default function EditCategory() {
         body: JSON.stringify({
           name: editing.name,
           slug: editing.slug,
+          lastIndex: editing.lastIndex ? Number(editing.lastIndex) : undefined,
           parentCategory: editing.parentCategory?._id || null,
           images,
-          lastIndex: editing.lastIndex ? Number(editing.lastIndex) : undefined, // ✅ Send lastIndex to API
         }),
       });
       const data = await res.json();
@@ -86,9 +139,8 @@ export default function EditCategory() {
     }
   };
 
-  // Handle delete category
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+    if (!confirm("Are you sure? This action cannot be undone.")) return;
 
     try {
       const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
@@ -106,40 +158,40 @@ export default function EditCategory() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <Card className="shadow-xl">
+    <div className="p-4 md:p-6 space-y-6">
+      <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg md:text-xl">Manage Categories</CardTitle>
-          <Link href="/admin/category/create">
+          <CardTitle className="text-xl">Manage Categories</CardTitle>
+          <a href="/admin/category/create">
             <Button>Create New</Button>
-          </Link>
+          </a>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((cat) => (
-              <Card key={cat._id} className="flex flex-col justify-between shadow hover:shadow-lg transition rounded-2xl">
+              <Card key={cat._id} className="flex flex-col justify-between shadow-md hover:shadow-xl transition rounded-lg">
                 <div className="flex items-center gap-4 p-4">
                   {cat.images?.[0] ? (
                     <img
                       src={cat.images[0].url}
                       alt={cat.name}
-                      className="h-16 w-16 rounded-lg border object-cover"
+                      className="h-16 w-16 rounded-md border object-cover"
                     />
                   ) : (
-                    <div className="h-16 w-16 rounded-lg border bg-gray-100 flex items-center justify-center text-xs text-gray-400">
-                      No Img
+                    <div className="h-16 w-16 rounded-md border bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                      No Image
                     </div>
                   )}
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">{cat.name}</p>
                     <p className="text-sm text-gray-500">{cat.slug}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 mt-1">
                       {cat.parentCategory ? `Sub of: ${cat.parentCategory.name}` : "Main Category"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center p-4 border-t">
+                <div className="flex items-center p-4 border-t bg-gray-50 rounded-b-lg">
                   <div className="flex gap-2">
                     <Dialog open={isDialogOpen && editing?._id === cat._id} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
@@ -160,7 +212,7 @@ export default function EditCategory() {
                           <DialogTitle>Edit: {editing?.name}</DialogTitle>
                         </DialogHeader>
                         {editing && (
-                          <form onSubmit={handleEditSubmit} className="space-y-4">
+                          <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="grid gap-2">
                                 <Label>Name</Label>
@@ -219,7 +271,7 @@ export default function EditCategory() {
                                 </Select>
                               </div>
 
-                              {/* ✅ lastIndex input added */}
+                              {/* ✅ Corrected lastIndex input */}
                               <div className="grid gap-2">
                                 <Label>Display Order</Label>
                                 <Input
@@ -268,3 +320,4 @@ export default function EditCategory() {
     </div>
   );
 }
+

@@ -1,9 +1,10 @@
-import { IdParams } from "@/app/admin/orders/[id]/page";
+
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
-import { Params } from "@/types/product";
+import type { IdParams } from "@/types/index";
 
 import { revalidatePath } from "next/cache";
+
 import { NextRequest, NextResponse } from "next/server";
 // Define the expected types for the request body
 interface IVariantOption {
@@ -82,16 +83,14 @@ export async function PUT(
 
       // Numeric Fields with Type Casting
       price: safeNumber(body.price),
-displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price),
-      
-      originalPrice: body.originalPrice || 0,
+      originalPrice: body.originalPrice,
       stock: safeNumber(body.stock),
       sold: safeNumber(body.sold, 0), // Default to 0 if not provided
       popularityScore: safeNumber(body.popularityScore, 0),
       rating: safeNumber(body.rating, 0),
       lastUpdatedIndex: body.lastUpdatedIndex ? safeNumber(body.lastUpdatedIndex) : undefined,
       advanced: safeNumber(body.advanced, 100),
-      sku: body.sku || "",
+
       // Boolean Fields
       isFreeDelivery: Boolean(body.isFreeDelivery ?? false),
       isCombo: Boolean(body.isCombo ?? false),
@@ -153,9 +152,7 @@ displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price)
     }
 
 
-    // 5. Mongoose Update Operation
-    // Use $set and $unset if you need partial updates, but for a full PUT, setting all fields is standard.
-    // The `new: true` option returns the updated document.
+
     const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
         new: true,
         runValidators: true, // Crucial for enforcing schema rules during update
@@ -187,7 +184,7 @@ displayPrice: body.displayPrice ? Number(body.displayPrice) : Number(body.price)
 // ==========================
 export async function DELETE(
   req: NextRequest,
-  { params }: Params
+  { params }: IdParams
 ) {
     const {id} = (await params)
   try {

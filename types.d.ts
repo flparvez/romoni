@@ -7,4 +7,12 @@ declare global {
   };
 }
 
+declare global {
+  interface Window {
+    dataLayer: Record<string, any>[];
+    fbq?: (...args: any[]) => void;
+  }
+}
+
+
 export {};

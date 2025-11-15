@@ -1,4 +1,4 @@
-// components/DashboardCard.tsx
+"use client"
 import { IconType } from 'react-icons'
 import { FiDollarSign, FiShoppingCart, FiPackage, FiUsers } from 'react-icons/fi'
 

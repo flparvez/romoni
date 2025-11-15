@@ -1,27 +1,11 @@
 // models/User.ts
 
+import type { IUser } from "@/types/index";
 import bcrypt from "bcryptjs";
 import mongoose, { Schema, model, models } from "mongoose";
 
-// Define a type for the Push Subscription object
-export interface IPushSubscription {
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-}
 
-export interface IUser {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-  subscriptions?: IPushSubscription[]; // Add this line
-  _id?: mongoose.Types.ObjectId;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+
 
 const userSchema = new Schema<IUser>(
   {

@@ -1,42 +1,9 @@
-import { Schema, model, models, Document } from "mongoose";
-import { IOrderItem } from "./OrderItem";
+import { Schema, model, models } from "mongoose";
+
+import type { ICourierHistory, IOrder } from "@/types/index";
 
 
-type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "APPROVED";
-type PaymentType = "COD" | "FullPayment";
-type PathaoStatus = "NOT_REQUESTED" | "REQUESTED" | "ACCEPTED" | "DELIVERED" | "CANCELLED";
 
-export interface ICourierHistory {
-  courier: string;
-  status: string;
-  trackingCode?: string;
-  isPickupRequested?: boolean;
-  requestedAt: Date;
-}
-
-export interface IOrder extends Document {
-  _id: string;
-  orderId?: string;
-  user?: Schema.Types.ObjectId;
-  fullName: string;
-  phone: string;
-  note?: string;
-  address: string;
-  city?: string;
-
-  paymentType: PaymentType;
-  trxId?: string;
-  status: OrderStatus;
-  totalAmount: number;
-  paytorider: number;
-  deliveryCharge: number;
-  items: (Schema.Types.ObjectId | IOrderItem)[];
-  createdAt: Date;
-  updatedAt?: Date;
-  pathaoStatus: PathaoStatus;
-  pathaoTrackingCode?: string;
-  courierHistory: ICourierHistory[];
-}
 
 const courierHistorySchema = new Schema<ICourierHistory>(
   {
@@ -63,8 +30,8 @@ const orderSchema = new Schema<IOrder>(
   
     paymentType: {
       type: String,
-      enum: ["COD", "FullPayment"],
-      default: "COD",
+      enum: ["FULL", "PARTIAL"],
+      default: "FULL",
       required: true,
     },
 

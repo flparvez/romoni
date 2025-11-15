@@ -2,11 +2,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { ICategoryRef } from "@/types/iproduct";
+
 import { SortOptions } from "./useProductFilters";
+import { ICategory } from "@/types";
 
 interface Props {
-  categories: ICategoryRef[];
+  categories: ICategory[];
   filters: {
     minPrice: number;
     maxPrice: number;

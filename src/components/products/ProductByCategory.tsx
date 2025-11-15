@@ -1,32 +1,80 @@
-import React from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import NewArrived from "@/components/home/NewArrived";
-import type { IIProduct } from "@/types/iproduct";
+import ProductListSkeleton from "@/components/Skelton";
+import type { IProduct } from "@/types/index";
+import { SITE_URL } from "@/hooks/serverApi";
 
 interface RelatedProductsProps {
   slug: string;
-  products: IIProduct[];
-  excludeProductId?: string; // current product will be excluded
+  excludeProductId?: string;
 }
 
-const RelatedProducts = ({ slug, products, excludeProductId }: RelatedProductsProps) => {
-  // Filter products by category and exclude current product
-  const filteredProducts: IIProduct[] = products
-    .filter(
-      (product: IIProduct) =>
-        product.category?.slug === slug && product._id !== excludeProductId
-    )
-    .slice(0, 6); // show up to 6 related products
+export default function RelatedProducts({
+  slug,
+  excludeProductId,
+}: RelatedProductsProps) {
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (filteredProducts.length === 0) return null; // hide section if no related products
+  useEffect(() => {
+    if (!slug) return;
+
+    let isMounted = true; // prevents updating state after unmount
+
+    async function loadProducts() {
+      setLoading(true);
+
+      try {
+        const res = await fetch(
+          `${SITE_URL}/api/products?category=${slug}&limit=8&page=1`,
+          {
+            cache: "force-cache",
+            next: { revalidate: 120 },
+          }
+        );
+
+        if (!res.ok) return setProducts([]);
+
+        const data = await res.json();
+        let related = data.products || [];
+
+        // Filter out current product
+        related = related.filter((p: IProduct) => p._id !== excludeProductId);
+
+        if (isMounted) setProducts(related);
+      } catch (err) {
+        console.error("Failed to load related products", err);
+        if (isMounted) setProducts([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, excludeProductId]);
+
+  if (loading)
+    return (
+      <div className="mt-6">
+        <ProductListSkeleton />
+      </div>
+    );
+
+  if (!products.length) return null;
 
   return (
-    <section className="mt-12">
+    <section className="mt-6">
       <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 text-center">
         Related Products
       </h2>
-      <NewArrived products={filteredProducts} />
+
+      <NewArrived products={products} />
     </section>
   );
-};
-
-export default RelatedProducts;
+}

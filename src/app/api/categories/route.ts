@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Category } from "@/models/Category";
-import { IProductImage } from "@/types/iproduct";
+
 import slugify from "slugify";
+
 // GET all categories (with parent + subcategories)
+
+export interface IProductImage {
+  url: string;
+  fileId?: string;
+  altText?: string;
+}
+
 export async function GET() {
   try {
     await connectToDatabase();
@@ -55,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const category = new Category({
       name: body.name,
-      slug: slugify(body.name, { lower: true }), 
+      slug: slugify(body.name, { lower: true }),
       description: body.description || "",
       images: categoryImages, // ✅ Use the correctly formatted array
       tags: Array.isArray(body.tags) ? body.tags : [],

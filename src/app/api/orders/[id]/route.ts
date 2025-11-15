@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Order } from "@/models/Order";
-import { OrderItem } from "@/models/OrderItem";
-import { Product } from "@/models/Product";
 
+import { Product } from "@/models/Product";
+import { OrderItem } from "@/models/OrderItem";
 
 /** ---------------- UPDATE ORDER ---------------- */
 export async function PUT(
@@ -14,7 +14,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { status, address, note, fullName, phone, cartItems } = body;
+    const { status, address, note, fullName, phone, cartItems, paytorider } = body;
 
     await connectToDatabase();
 
@@ -33,6 +33,7 @@ export async function PUT(
    
     if (fullName && fullName !== existingOrder.fullName) updateData.fullName = fullName;
     if (phone && phone !== existingOrder.phone) updateData.phone = phone;
+    if (paytorider && paytorider !== existingOrder.paytorider) updateData.paytorider = paytorider;
 
     // ✅ Handle status-specific logic
     if (status && status !== existingOrder.status) {
@@ -116,6 +117,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   await connectToDatabase();
+    //  get products
+
 
   try {
     const { id } = await params;
@@ -140,7 +143,7 @@ export async function GET(
           select: "name price images",
         },
       })
-      .populate("user", "name email");
+      // .populate("user", "name email");
 
     if (!order) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });

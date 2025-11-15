@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
-import { Params } from "@/types/product";
+import type { IdParams } from "@/types/index";
 
-export async function POST(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: IdParams) {
   try {
     await connectToDatabase();
   const {id} = (await params)

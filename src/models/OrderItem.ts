@@ -1,13 +1,6 @@
-import { Schema, model, models, Document } from "mongoose";
+import type { IOrderItem } from "@/types/index";
+import { Schema, model, models } from "mongoose";
 
-export interface IOrderItem extends Document {
-  order: Schema.Types.ObjectId;
-  product: Schema.Types.ObjectId; // Linked with Product model
-  quantity: number;
-  price: number;
-  variant?: string; // e.g., "Size: Large" or "Color: Red"
- selectedVariantOptions?: Record<string, string>; // { Size: "M", Color: "Red" }
-}
 
 const OrderItemSchema = new Schema({
   order: { type: Schema.Types.ObjectId, ref: "Order", required: true },

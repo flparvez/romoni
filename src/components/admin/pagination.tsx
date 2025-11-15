@@ -1,44 +1,75 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
+// components/admin/Pagination.tsx
+"use client";
 
-interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  className?: string
+import React from "react";
+
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  siblingCount?: number; // how many page buttons on left/right
 }
 
-export const Pagination = ({
+function range(start: number, end: number) {
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
+
+export const Pagination: React.FC<Props> = ({
   currentPage,
   totalPages,
-  className,
-}: PaginationProps) => {
-  const getPageLink = (page: number) => {
-    const params = new URLSearchParams()
-    params.set("page", page.toString())
-    return `/admin/products?${params.toString()}`
+  onPageChange,
+  siblingCount = 1,
+}) => {
+  if (totalPages <= 1) return null;
+
+  const leftSibling = Math.max(1, currentPage - siblingCount);
+  const rightSibling = Math.min(totalPages, currentPage + siblingCount);
+
+  const pages: (number | "...")[] = [];
+
+  if (leftSibling > 1) {
+    pages.push(1);
+    if (leftSibling > 2) pages.push("...");
+  }
+
+  pages.push(...range(leftSibling, rightSibling));
+
+  if (rightSibling < totalPages) {
+    if (rightSibling < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
   }
 
   return (
-    <div className={cn("flex items-center justify-between", className)}>
-      <Button variant="outline" asChild disabled={currentPage <= 1}>
-        <Link href={getPageLink(currentPage - 1)}>
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </Link>
-      </Button>
-      
-      <div className="text-sm text-muted-foreground">
-        Page {currentPage} of {totalPages}
-      </div>
+    <nav className="flex items-center gap-2" aria-label="Pagination">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        className="px-3 py-1.5 rounded-md border hover:bg-gray-100"
+        disabled={currentPage === 1}
+      >
+        Prev
+      </button>
 
-      <Button variant="outline" asChild disabled={currentPage >= totalPages}>
-        <Link href={getPageLink(currentPage + 1)}>
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Link>
-      </Button>
-    </div>
-  )
-}
+      {pages.map((p, idx) =>
+        p === "..." ? (
+          <span key={idx+1} className="px-3 py-1.5 text-gray-500">…</span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(Number(p))}
+            className={`px-3 py-1.5 rounded-md border ${p === currentPage ? "bg-black text-white" : "bg-white"}`}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        className="px-3 py-1.5 rounded-md border hover:bg-gray-100"
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </button>
+    </nav>
+  );
+};

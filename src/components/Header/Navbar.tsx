@@ -157,7 +157,7 @@ const Navbar: React.FC = () => {
 
       try {
         // Use the existing filter API route
-        const res = await fetch(`/api/products/filter?search=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}`);
         const data = await res.json();
 
         if (res.ok && data.success) {

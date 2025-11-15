@@ -1,56 +1,103 @@
+import { ICategory, IProduct } from "@/types";
 import { MetadataRoute } from "next";
 
-const baseUrl = "https://a1romoni.vercel.app";
+const baseUrl = "https://a1romoni.xyz";
+
+// ✅ Helper function: safely fetch data
+async function fetchData(url: string) {
+  try {
+    const res = await fetch(url, {
+      next: { revalidate: 60 * 60  }, // Revalidate daily
+    });
+    if (!res.ok) {
+      console.error(`Sitemap fetch error: Failed to fetch ${url} (${res.status})`);
+      return null;
+    }
+    return res.json();
+  } catch (error) {
+    console.error(`Sitemap fetch error: Error fetching ${url}`, error);
+    return null;
+  }
+}
+
+// ✅ Helper: XML Escape
+function xmlEscape(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// ✅ Helper: Safe URL constructor
+function constructUrl(path: string): string {
+  const safePath = path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment)) // encode each segment
+    .join("/");
+
+  return xmlEscape(new URL(safePath, baseUrl).toString());
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // ✅ Fetch categories safely
-  const categoryRes = await fetch(`${baseUrl}/api/categories`, {
-    next: { revalidate: 60 * 60 * 24 }, // cache 1 day
-  }).then((res) => res.json()).catch(() => ({ categories: [] }));
+  // Fetch data in parallel
+  const [productData, categoryData] = await Promise.all([
+    fetchData(`${baseUrl}/api/products`),
+    fetchData(`${baseUrl}/api/categories`),
+  ]);
 
-  // ✅ Fetch products safely
-  const productRes = await fetch(`${baseUrl}/api/products`, {
-    next: { revalidate: 60 * 60 * 6 }, // cache 6 hours
-  }).then((res) => res.json()).catch(() => ({ products: [] }));
+  const products = productData?.products ?? [];
+  const categories = categoryData?.categories ?? [];
 
-  const categories = Array.isArray(categoryRes.categories) ? categoryRes.categories : [];
-  const products = Array.isArray(productRes.products) ? productRes.products : [];
+  // Products URLs
+  const productUrls = products.map((product: IProduct) => ({
+    url: constructUrl(`/product/${product.slug}`),
+    lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
-  // ✅ Helper to ensure clean URLs
-  const cleanUrl = (path: string) =>
-    `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`.replace(/([^:]\/)\/+/g, "$1");
+  // Category URLs
+  const categoryUrls = categories.map((category: ICategory) => ({
+    url: constructUrl(`/category/${category.slug}`),
+    lastModified: category.updatedAt ? new Date(category.updatedAt) : new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
 
-  return [
-    // ✅ Homepage
+  // Static Pages
+  const staticPages = [
     {
-      url: cleanUrl("/"),
+      url: constructUrl(`/products`),
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 1.0,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     },
-
-    // ✅ Products page
     {
-      url: cleanUrl("/products"),
+      url: constructUrl(`/about-us`),
       lastModified: new Date(),
-      changeFrequency: "yearly",
+      changeFrequency: "yearly" as const,
       priority: 0.5,
     },
+    {
+      url: constructUrl(`/contact`),
+      lastModified: new Date(),
+      changeFrequency: "yearly" as const,
+      priority: 0.5,
+    },
+  ];
 
-    // ✅ Categories
-    ...categories.map((cat: any) => ({
-      url: cleanUrl(`/category/${encodeURIComponent(cat.slug)}`),
-      lastModified: cat.updatedAt ? new Date(cat.updatedAt) : new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    })),
-
-    // ✅ Products
-    ...products.map((prod: any) => ({
-      url: cleanUrl(`/product/${encodeURIComponent(prod.slug)}`),
-      lastModified: prod.updatedAt ? new Date(prod.updatedAt) : new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    })),
+  // Combine all URLs
+  return [
+    {
+      url: xmlEscape(baseUrl),
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 1.0,
+    },
+    ...staticPages,
+    ...categoryUrls,
+    ...productUrls,
   ];
 }

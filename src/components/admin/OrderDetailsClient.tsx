@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { City, Zone, Area } from "@/types/pathao";
-import { IIOrder } from "@/types/product";
+
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import FraudCheck from "./FraudCheck";
 import { CartItem } from "@/hooks/useCart";
+import type { IOrder } from "@/types/index";
+import Link from "next/link";
 
 interface Props {
-  order: IIOrder;
+  order: IOrder;
 }
 
 type CourierService = "PATHAO" | "STEADFAST";
@@ -22,6 +24,7 @@ export default function OrderDetailsClient({ order }: Props) {
     status: order?.status,
     paymentType: order?.paymentType,
     address: order?.address,
+    paytorider: order?.paytorider,
     cityId: "",
     zoneId: "",
     areaId: "",
@@ -87,7 +90,9 @@ export default function OrderDetailsClient({ order }: Props) {
       .then((data) => setAreas(data?.data || []))
       .catch((err) => console.error("Failed to fetch areas:", err));
   }, [form.zoneId]);
-
+ const trackingLink = currentCourier?.trackingCode
+    ? `https://steadfast.com.bd/t/${currentCourier.trackingCode}`
+    : "#";
   // ===============================
   // 📌 Handlers
   // ===============================
@@ -212,7 +217,7 @@ export default function OrderDetailsClient({ order }: Props) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 🔹 Order Information */}
-          <OrderInfo order={order} currentCourier={currentCourier} />
+          <OrderInfo order={order} currentCourier={currentCourier} trackingLink={trackingLink} />
 
           {/* 🔹 Management Section */}
           <div className="space-y-6">
@@ -352,7 +357,7 @@ export default function OrderDetailsClient({ order }: Props) {
 // ===============================
 // 📌 Sub Components
 // ===============================
-const OrderInfo = ({ order, currentCourier }: any) => (
+const OrderInfo = ({ order, currentCourier , trackingLink }: any) => (
   <div className="bg-white rounded-lg shadow p-4">
     <h2 className="text-xl font-semibold mb-4">Order Information</h2>
     <div className="space-y-3 text-sm">
@@ -371,9 +376,23 @@ const OrderInfo = ({ order, currentCourier }: any) => (
       {currentCourier && (
         <InfoRow
           label="Courier"
-          value={`${currentCourier.service}: ${currentCourier.trackingCode} (${currentCourier.status})`}
+          value={`${currentCourier.courier}: ${currentCourier.trackingCode} (${currentCourier.status})`}
         />
       )}
+
+       <InfoRow
+            label="Tracking Link"
+            value={
+              <Link
+                href={trackingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Track Shipment
+              </Link>
+            }
+          />
     </div>
   </div>
 );
@@ -390,6 +409,17 @@ const ManageOrder = ({ form, handleChange, handleSubmit, loading }: any) => (
             type="text"
             name="address"
             value={form.address}
+            onChange={handleChange}
+            className="w-full border rounded-md px-3 py-2"
+          />
+        </div>
+             {/* paytorider */}
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium mb-1">paytorider</label>
+          <input
+            type="text"
+            name="paytorider"
+            value={form.paytorider}
             onChange={handleChange}
             className="w-full border rounded-md px-3 py-2"
           />

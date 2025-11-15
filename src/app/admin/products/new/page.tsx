@@ -67,7 +67,7 @@ const CreateProduct = () => {
     stock: "",
     sku: "",
     categoryId: "",
-
+    
     warranty: "",
     video: "",
     isFeatured: false,
@@ -78,7 +78,7 @@ const CreateProduct = () => {
     seoDescription: "",
     seoKeywords: "",
     isCombo: false,
-
+    
   });
 
   // ===== Fetch Categories =====
@@ -112,7 +112,7 @@ const CreateProduct = () => {
   const handleDescriptionChange = (html: string) => {
     setFormData((prev) => ({ ...prev, description: html }));
   };
-  const handleImagePick = async () => prompt("Please enter the image URL:");
+   const handleImagePick = async () => prompt("Please enter the image URL:");
 
   // ===== Variants =====
   const handleVariantOptionChange = (vi: number, oi: number, key: keyof IVariantOption, value: string | number) => {
@@ -147,17 +147,7 @@ const CreateProduct = () => {
     });
   };
 
-  // ===== Specifications =====
-  const handleSpecChange = (i: number, key: keyof ISpecification, value: string) => {
-    setSpecifications((prev) => {
-      const updated = [...prev];
-      updated[i] = { ...updated[i], [key]: value };
-      return updated;
-    });
-  };
-
-  const addSpecification = () => setSpecifications([...specifications, { key: "", value: "" }]);
-
+ 
   // ===== Submit Handler =====
   const handleSubmit = async () => {
     const validSpecs = specifications.filter((s) => s.key && s.value);
@@ -234,7 +224,7 @@ const CreateProduct = () => {
           <div><Label>মূল্য*</Label><Input name="price" type="number" value={formData.price} onChange={handleChange} /></div>
           <div><Label>স্টক</Label><Input name="stock" type="number" value={formData.stock} onChange={handleChange} /></div>
           <div><Label>SKU</Label><Input name="sku" value={formData.sku} onChange={handleChange} /></div>
-          
+     
         </CardContent>
       </Card>
 
@@ -295,6 +285,7 @@ const CreateProduct = () => {
                <RichTextEditor value={formData.description} onChange={handleDescriptionChange} onPickImage={handleImagePick} />
            </CardContent>
        </Card>
+
       {/* ✅ Images */}
       <Card>
         <CardHeader><h2 className="text-xl font-semibold">প্রোডাক্ট ছবি</h2></CardHeader>

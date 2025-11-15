@@ -1,23 +1,8 @@
+
 import mongoose, { Schema, Document, Model } from "mongoose";
+import type { ICategory } from "../types/index";
 
-export interface ICategory {
-  name: string;
-  slug: string;
-  description?: string;
-  images?: { url: string; alt?: string }[];
-  tags?: string[];
-  parentCategory?: mongoose.Types.ObjectId | null;
-  isFeatured?: boolean;
-  isActive?: boolean;
-  seoTitle?: string;
-  lastIndex: string;
-  seoDescription?: string;
-  seoKeywords?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 
-export interface ICategoryDocument extends ICategory, Document {}
 
 const ImageSchema = new Schema(
   {
@@ -27,7 +12,7 @@ const ImageSchema = new Schema(
   { _id: false }
 );
 
-const CategorySchema = new Schema<ICategoryDocument>(
+const CategorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, index: true },
@@ -61,6 +46,6 @@ CategorySchema.virtual("subcategories", {
 CategorySchema.index({ isFeatured: 1 });
 CategorySchema.index({ isActive: 1 });
 
-export const Category: Model<ICategoryDocument> =
-  (mongoose.models.Category as Model<ICategoryDocument>) ||
-  mongoose.model<ICategoryDocument>("Category", CategorySchema);
+export const Category: Model<ICategory> =
+  (mongoose.models.Category as Model<ICategory>) ||
+  mongoose.model<ICategory>("Category", CategorySchema);

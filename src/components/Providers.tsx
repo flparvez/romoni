@@ -1,18 +1,34 @@
 "use client";
-import { CartProvider } from "@/hooks/useCart";
 
+import { useEffect, useState } from "react";
+import { CartProvider } from "@/hooks/useCart";
 import { SessionProvider } from "next-auth/react";
 import { PushNotificationProvider } from "./PushNotificationProvider";
 
-
+/**
+ * Wraps all client-only contexts (Session, Cart, Push Notification)
+ * Ensures they only mount on client to prevent hydration mismatch
+ */
 export default function Providers({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+
+  // Prevent server-side rendering mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    // Prevent hydration mismatch by not rendering children on the server
+    return null;
+  }
+
   return (
-    <SessionProvider> 
- <PushNotificationProvider> 
-<CartProvider>
-      {children}
-      </CartProvider>
-</PushNotificationProvider>
+    <SessionProvider>
+      <PushNotificationProvider>
+        <CartProvider>
+          {children}
+        </CartProvider>
+      </PushNotificationProvider>
     </SessionProvider>
   );
 }

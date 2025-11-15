@@ -1,20 +1,20 @@
 "use client"
-import { useCategories } from '@/hooks/DataFetch'
+
 import React, { Suspense } from 'react'
 
 import ProductFilter from '../filter/Fiter'
-import { ICategoryRef } from '@/types/iproduct'
+import { ICategory } from '@/types'
+import ProductListSkeleton from '../Skelton'
 
-const AllProducts = ({categories}: { categories: ICategoryRef[]}) => {
+const AllProducts = ({categories}: { categories: ICategory[]}) => {
                
          
                 return (
                                 <div>
-                         <Suspense fallback={
-          <div className="flex justify-center items-center h-96">
-            <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-blue-500"></div>
-          </div>
-        }>
+                                  {/*  All Product special title */}
+
+                                  <h2 className="text-xl  text-center sm:text-2xl font-bold ">All Products - A1 Romoni</h2>
+                         <Suspense fallback={<ProductListSkeleton />}>
           <ProductFilter categories={categories || []} />
         </Suspense>
                                 </div>

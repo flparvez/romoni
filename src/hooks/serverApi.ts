@@ -1,6 +1,8 @@
 // lib/serverApi.ts
 
-import { SITE_URL } from "@/types/product";
+export const SITE_URL = "https://a1romoni.vercel.app";
+// export const SITE_URL = "http://localhost:3000";
+
 
 export async function serverApi<T = any>(
   endpoint: string,

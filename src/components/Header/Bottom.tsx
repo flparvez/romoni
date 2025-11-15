@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Home, ShoppingBag, ShoppingCart, User } from "lucide-react";
 
 const navLinks = [
@@ -16,6 +17,14 @@ const navLinks = [
 const BottomBar = () => {
   const { cart } = useCart();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  // ✅ Ensures we only render after client hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // Prevent hydration mismatch
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -45,7 +54,7 @@ const BottomBar = () => {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 <span className="text-xs">{link.name}</span>
-                
+
                 {link.name === "Cart" && totalItems > 0 && (
                   <motion.span
                     key={totalItems}

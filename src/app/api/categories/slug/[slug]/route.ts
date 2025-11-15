@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Category } from "@/models/Category";
-import { IdParams } from "@/app/admin/orders/[id]/page";
 
 // GET single category by slug
 export async function GET(

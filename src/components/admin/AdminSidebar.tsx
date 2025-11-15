@@ -7,220 +7,171 @@ import {
   Package,
   ShoppingCart,
   Users,
-  Home,
-  ChevronDown,
-  ChevronRight,
   Layers,
   Tag,
   Settings,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NavItem {
-  href?: string;
   label: string;
-  icon?: React.ElementType;
-  children?: { href: string; label: string }[];
+  href?: string;
+  icon: React.ElementType;
+  children?: { label: string; href: string }[];
 }
 
-const navItems: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+const NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   {
     label: "Orders",
+    href: "/admin/orders",
     icon: ShoppingCart,
     children: [
-      { href: "/admin/orders", label: "Manage Orders" },
-      { href: "/admin/orders/returns", label: "Returns" },
+      { label: "Manage Orders", href: "/admin/orders" },
+      { label: "Returns", href: "/admin/orders/returns" },
     ],
   },
   {
-    label: "Sale",
+    label: "Landing Pages",
+    href: "/admin/landing",
     icon: Layers,
     children: [
-      { href: "/admin/sale/overview", label: "Overview" },
-      { href: "/admin/sale/reports", label: "Reports" },
+      { label: "Manage Landing", href: "/admin/landing" },
+      { label: "Create New", href: "/admin/landing/create" },
     ],
   },
   {
     label: "Products",
+    href: "/admin/products",
     icon: Package,
     children: [
-      { href: "/admin/products", label: "Manage Products" },
-      { href: "/admin/products/bulkprice", label: "BulkPrice" },
-      { href: "/admin/products/rprice", label: "Regular Price" },
+      { label: "All Products", href: "/admin/products" },
+      { label: "Create", href: "/admin/products/new" },
+      { label: "Variants", href: "/admin/products/variant" },
     ],
   },
   {
-    label: "Category",
+    label: "Categories",
+    href: "/admin/category",
     icon: Tag,
     children: [
-      { href: "/admin/category", label: "Manage Categories" },
-      { href: "/admin/category/sub", label: "Sub Categories" },
+      { label: "Manage Categories", href: "/admin/category" },
+      { label: "Sub Categories", href: "/admin/category/sub" },
     ],
   },
-
-  { href: "/admin/accounts", label: "Accounts", icon: Users },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { label: "Customers", href: "/admin/accounts", icon: Users },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleGroup = (label: string) => {
-    setOpenGroups((prev) =>
-      prev.includes(label) ? prev.filter((g) => g !== label) : [...prev, label]
-    );
-  };
-
-const isActive = (href?: string): boolean => {
-  if (!href) return false;
-  if (href === "/admin") return pathname === href;
-  return pathname.startsWith(href);
-};
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* --- Topbar (Only for Mobile) --- */}
-      <div className="flex items-center justify-between md:hidden border-b px-4 h-[56px] bg-background sticky top-0 z-40">
-    
-        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      {/* MOBILE HEADER */}
+      <div className="md:hidden flex items-center justify-between px-4 h-14 border-b bg-white">
+        <button onClick={() => setMobileOpen(true)}>
+          <Menu className="h-6 w-6" />
         </button>
+        <span className="font-semibold text-lg">Admin Panel</span>
       </div>
 
-      {/* --- Sidebar for Both Desktop + Mobile --- */}
+      {/* MOBILE SIDEBAR */}
       <AnimatePresence>
-        {sidebarOpen && (
+        {mobileOpen && (
           <motion.aside
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
-            transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r shadow-lg md:hidden"
+            transition={{ duration: 0.25 }}
+            className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r shadow-lg p-4"
           >
-            <div className="flex h-[56px] items-center justify-between border-b px-4">
-              <span className="font-semibold">A1 Romoni</span>
-              <button onClick={() => setSidebarOpen(false)}>
+            <div className="flex items-center justify-between h-12 border-b mb-4">
+              <span className="font-semibold text-lg">Menu</span>
+              <button onClick={() => setMobileOpen(false)}>
                 <X className="h-6 w-6" />
               </button>
             </div>
-            <SidebarContent
-              navItems={navItems}
-              openGroups={openGroups}
-              toggleGroup={toggleGroup}
-              isActive={isActive}
-            />
+
+            <SidebarMenu pathname={pathname} />
+
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* --- Desktop Sidebar Always Visible --- */}
-      <aside className="hidden md:flex w-64 flex-col border-r bg-gradient-to-b from-background to-muted/40">
-        <SidebarContent
-          navItems={navItems}
-          openGroups={openGroups}
-          toggleGroup={toggleGroup}
-          isActive={isActive}
-        />
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden md:flex flex-col w-64 border-r bg-white p-4">
+        <div className="h-14 flex items-center font-semibold text-lg border-b mb-4">
+          Admin Panel
+        </div>
+
+        <SidebarMenu pathname={pathname} />
       </aside>
     </>
   );
 }
 
-/* ✅ Sidebar Content */
-function SidebarContent({
-  navItems,
-  openGroups,
-  toggleGroup,
-  isActive,
-}: {
-  navItems: NavItem[];
-  openGroups: string[];
-  toggleGroup: (label: string) => void;
-  isActive: (href?: string) => boolean;
-}) {
-  return (
-    <nav className="flex-1 space-y-1 p-4">
-      {navItems.map(({ href, label, icon: Icon, children }) => {
-        const groupOpen = openGroups.includes(label);
+function SidebarMenu({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState<string | null>(null);
 
-        if (children) {
-          return (
-            <div key={label}>
-              <button
-                onClick={() => toggleGroup(label)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  groupOpen
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {Icon && <Icon className="h-5 w-5" />}
-                  {label}
-                </div>
-                {groupOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </button>
-              <AnimatePresence initial={false}>
-                {groupOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="ml-8 mt-1 space-y-1 overflow-hidden"
-                  >
-                    {children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`block rounded-md px-3 py-1.5 text-sm transition-colors ${
-                          isActive(child.href)
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                        }`}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        }
+  return (
+    <nav className="space-y-1 text-sm">
+      {NAV_ITEMS.map((item) => {
+        const isActive = item.href && pathname.startsWith(item.href);
+        const isOpen = open === item.label;
 
         return (
-          <motion.div
-            key={label}
-            whileHover={{ x: 4 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Link
-              href={href!}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive(href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          <div key={item.label}>
+            <button
+              onClick={() => (item.children ? setOpen(isOpen ? null : item.label) : undefined)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition ${
+                isActive ? "bg-primary/10 text-primary" : "hover:bg-gray-100"
               }`}
             >
-              {Icon && (
-                <Icon
-                  className={`h-5 w-5 ${isActive(href) ? "text-primary" : ""}`}
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                {item.href ? <Link href={item.href}>{item.label}</Link> : item.label}
+              </div>
+
+              {item.children && (
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 />
               )}
-              {label}
-            </Link>
-          </motion.div>
+            </button>
+
+            {/* CHILDREN */}
+            <AnimatePresence>
+              {isOpen && item.children && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="ml-8 mt-1 space-y-1"
+                >
+                  {item.children.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className={`block px-3 py-1 rounded-md ${
+                        pathname.startsWith(sub.href)
+                          ? "text-primary font-medium"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         );
       })}
     </nav>

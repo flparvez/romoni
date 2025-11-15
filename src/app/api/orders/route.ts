@@ -1,25 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Order } from "@/models/Order";
-import { IOrderItem, OrderItem } from "@/models/OrderItem";
+import webpush from "web-push";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { OrderItem } from "@/models/OrderItem";
 import { Types } from "mongoose";
-import { User, IPushSubscription } from "@/models/User";
-import webpush from "web-push";
+import { User } from "@/models/User";
+import { IPushSubscription } from "@/types";
 
-// Configure web-push
-if (
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
-  process.env.VAPID_PRIVATE_KEY &&
-  process.env.VAPID_MAILTO
-) {
-  webpush.setVapidDetails(
-    process.env.VAPID_MAILTO,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
+// Prevent Next.js from caching this API route
+export const dynamic = "force-dynamic";
+
+/** ---------------- CONFIGURE WEB PUSH SAFELY ---------------- */
+try {
+  if (
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
+    process.env.VAPID_PRIVATE_KEY &&
+    process.env.VAPID_MAILTO
+  ) {
+    webpush.setVapidDetails(
+      process.env.VAPID_MAILTO,
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  }
+} catch (err) {
+  console.warn("⚠ Web Push config skipped:", err);
 }
+
+/** ---------------- SALES ANALYTICS FUNCTION ---------------- */
+async function getSalesAnalytics() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  return Order.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: thirtyDaysAgo },
+        status: "DELIVERED",
+      },
+    },
+    {
+      $project: {
+        totalOrderValue: { $add: ["$totalAmount", "$deliveryCharge"] }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+        },
+        totalSales: { $sum: "$totalOrderValue" },
+        orderCount: { $sum: 1 },
+        averageOrderValue: { $avg: "$totalOrderValue" }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+}
+
+/** ---------------- GET ORDERS ---------------- */
+export async function GET(request: NextRequest) {
+  try {
+    await connectToDatabase();
+
+    const { searchParams } = new URL(request.url);
+    const view = searchParams.get("view"); // ?view=analytics
+
+    // ✅ Analytics view
+    if (view === "analytics") {
+      const analyticsData = await getSalesAnalytics();
+      return NextResponse.json({ success: true, analytics: analyticsData });
+    }
+
+    // ✅ All orders list
+    const orders = await Order.find({})
+      .populate({
+        path: "items",
+        populate: { path: "product", model: "Product" }
+      })
+      .sort({ createdAt: -1 })
+      .lean(); // Convert to plain JS object (faster + safe JSON)
+
+    return NextResponse.json({ success: true, orders });
+  } catch (error) {
+    console.error("❌ Get Orders API Error:", error);
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
+  }
+}
+
 
 
 
@@ -125,70 +195,6 @@ const orderItemIds = await Promise.all(
     console.error("Order creation error:", error);
     return NextResponse.json(
       { error: "Failed to create order" },
-      { status: 500 }
-    );
-  }
-}
-
-
-
-/** ---------------- SALES ANALYTICS ---------------- */
-async function getSalesAnalytics() {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  return await Order.aggregate([
-    {
-      $match: {
-        createdAt: { $gte: thirtyDaysAgo },
-        status: "DELIVERED",
-      },
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        totalSales: { $sum: { $add: ["$totalAmount", "$deliveryCharge"] } },
-        orderCount: { $sum: 1 },
-        averageOrderValue: {
-          $avg: { $add: ["$totalAmount", "$deliveryCharge"] },
-        },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);
-}
-
-/** ---------------- GET ORDERS ---------------- */
-export async function GET(request: NextRequest) {
-  try {
-    await connectToDatabase();
-
-    const { searchParams } = new URL(request.url);
-    const view = searchParams.get("view");
-
-    // Analytics View
-    if (view === "analytics") {
-      const analyticsData = await getSalesAnalytics();
-      return NextResponse.json(
-        { success: true, analytics: analyticsData },
-        { status: 200 }
-      );
-    }
-
-    // Orders List
-    const orders = await Order.find({})
-      .populate({
-        path: "items",
-        populate: { path: "product", model: "Product" },
-      })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return NextResponse.json({ success: true, orders }, { status: 200 });
-  } catch (error) {
-    console.error("Get orders error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch orders" },
       { status: 500 }
     );
   }

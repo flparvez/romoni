@@ -11,9 +11,9 @@ import { Image } from "@imagekit/next";
 import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/pagination";
+import { ICategory } from "@/types";
 
 
-import { ICategoryRef } from "@/types/iproduct";
 
 const colors = [
   "bg-blue-500",
@@ -26,7 +26,7 @@ const colors = [
   "bg-teal-500",
 ];
 
-const CategorySlider = ({categories}: { categories: ICategoryRef[]}) => {
+const CategorySlider = ({categories}: { categories: ICategory[]}) => {
 
 
  
@@ -46,7 +46,7 @@ const CategorySlider = ({categories}: { categories: ICategoryRef[]}) => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="container mx-auto py-4"
+      className="container mx-auto py-2"
     >
     
 
@@ -62,7 +62,7 @@ const CategorySlider = ({categories}: { categories: ICategoryRef[]}) => {
           disableOnInteraction: false,
         }}
         modules={[FreeMode, Pagination, Autoplay]}
-        className="myCategorySwiper pb-10 px-4"
+        className="myCategorySwiper pb-10 px-3"
         breakpoints={{
           640: {
             slidesPerView: 3,

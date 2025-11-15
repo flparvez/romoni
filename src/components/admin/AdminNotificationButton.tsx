@@ -1,6 +1,6 @@
 'use client';
 
-import { usePushNotifications } from "../PushNotificationProvider";
+import { usePushNotifications } from "./PushNotificationProvider";
 
 
 

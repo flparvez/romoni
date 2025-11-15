@@ -1,23 +1,8 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
-import { IProduct } from "@/types/iproduct";
+import type { IProduct, IProductImage } from "@/types/index";
+import mongoose, { Schema, Model } from "mongoose";
 
-export interface IProductDocument extends IProduct, Document {}
-export interface IProductImage {
-  url: string;
-  fileId?: string;
-  altText?: string;
-}
 
-// --- Sub-Schemas ---
 
-const productImageSchema = new Schema<IProductImage>(
-  {
-    url: { type: String, required: true },
-    fileId: { type: String },
-    altText: { type: String },
-  },
-  { _id: false }
-);
 
 const VariantOptionSchema = new Schema(
   {
@@ -45,60 +30,61 @@ const AttributeSchema = new Schema(
   { _id: false }
 );
 
-
-// --- Main Product Schema ---
-
-const ProductSchema = new Schema<IProductDocument>(
+const productImageSchema = new Schema<IProductImage>(
   {
-    // Core Information
+    url: { type: String, required: true },
+    fileId: { type: String },
+    altText: { type: String },
+  },
+  { _id: false }
+)
+
+const ProductSchema = new Schema<IProduct>(
+  {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, index: true },
     shortName: { type: String, trim: true },
     description: { type: String, default: "" },
-    sku: { type: String },
-    category: new Schema({
-        _id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-        name: { type: String },
-        slug: { type: String },
-      }, { _id: false }),
 
-    // Pricing
-    price: { type: Number, required: true }, // Your internal base/cost price
-    displayPrice: { type: Number }, // The price customers see and pay
-    originalPrice: { type: Number }, // The "strikethrough" price for showing a discount
+    category: new Schema({
+      _id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
+      name: { type: String },
+      slug: { type: String },
+    }, { _id: false }),
+
+    price: { type: Number, required: true },
+    originalPrice: { type: Number },
     discount: { type: Number, default: 0 },
     isFreeDelivery: { type: Boolean, default: false },
 
-    // Media
     images: { type: [productImageSchema], required: true },
     video: { type: String },
-    reviews: { type: [productImageSchema] },
 
-    // Inventory & Metrics
     stock: { type: Number, required: true, default: 0 },
     sold: { type: Number, default: 0 },
     popularityScore: { type: Number, default: 0 },
-    rating: { type: Number, min: 0, max: 5, default: 0 },
-    
-    // Specifications & Variants
+
     warranty: { type: String },
     specifications: { type: [AttributeSchema], default: [] },
-    variants: { type: [VariantSchema], default: [] },
 
-    // SEO
     seoTitle: { type: String },
     seoDescription: { type: String },
     seoKeywords: { type: [String], default: [] },
+    reviews: { type: [productImageSchema] },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
 
-    // Combo & Duplicates
+    variants: { type: [VariantSchema], default: [] },
+
     isCombo: { type: Boolean, default: false },
-    comboProducts: [{
+    comboProducts: [
+      {
         product: { type: Schema.Types.ObjectId, ref: "Product" },
         quantity: { type: Number, default: 1 },
-      }],
+      },
+    ],
+
     duplicateOf: { type: Schema.Types.ObjectId, ref: "Product", default: null },
 
-    // Status & Visibility
     isFeatured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     status: {
@@ -107,9 +93,8 @@ const ProductSchema = new Schema<IProductDocument>(
       default: "ACTIVE",
     },
 
-    // Internal
     lastUpdatedIndex: { type: Number },
-    advanced: { type: Number, default: 100 },
+    advanced: { type: Number , default: 100},
   },
   {
     timestamps: true,
@@ -119,42 +104,25 @@ const ProductSchema = new Schema<IProductDocument>(
   }
 );
 
-
-// --- Indexes ---
-
-ProductSchema.index({ name: "text", slug: "text" });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ sold: -1 });
+ProductSchema.index({ rating: -1 });
 ProductSchema.index({ popularityScore: -1 });
 ProductSchema.index({ "category._id": 1 });
-ProductSchema.index({ isFeatured: 1, isActive: 1 });
+ProductSchema.index({ isFeatured: 1 });
+ProductSchema.index({ isActive: 1 });
 
-
-// --- Middleware ---
-
-ProductSchema.pre<IProductDocument>("save", function (next) {
-  // On creation, if displayPrice isn't set, default it to the base price.
-  if (this.isNew && !this.displayPrice) {
-    this.displayPrice = this.price;
-  }
-  
-  // ✅ CORRECTED: Calculate discount based on originalPrice and displayPrice.
-  // A discount exists only if originalPrice is set and is higher than the displayPrice.
-  if (this.originalPrice && this.originalPrice > this.displayPrice) {
+ProductSchema.pre<IProduct>("save", function (next) {
+  if (this.originalPrice && this.originalPrice > this.price) {
     this.discount = Math.round(
-      ((this.originalPrice - this.displayPrice) / this.originalPrice) * 100
+      ((this.originalPrice - this.price) / this.originalPrice) * 100
     );
   } else {
-    // Otherwise, there is no discount.
     this.discount = 0;
   }
-  
   next();
 });
 
-
-// --- Model Export ---
-
-export const Product: Model<IProductDocument> =
-  (mongoose.models.Product as Model<IProductDocument>) ||
-  mongoose.model<IProductDocument>("Product", ProductSchema);
+export const Product: Model<IProduct> =
+  (mongoose.models.Product as Model<IProduct>) ||
+  mongoose.model<IProduct>("Product", ProductSchema);

@@ -1,7 +1,7 @@
 // src/app/api/pathao/pickup-request/route.ts
 import { NextResponse } from "next/server";
 
-import { IOrder, Order as OrderModel } from "@/models/Order";
+import {  Order as OrderModel } from "@/models/Order";
 import { OrderPayload, PathaoOrderResponse } from "@/types/pathao";
 import { createPathaoOrder } from "@/lib/pathao";
 import { connectToDatabase } from "@/lib/db";
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const { orderId }: { orderId: string } = await request.json();
 
-    const order: IOrder | null = await OrderModel.findById(orderId);
+    const order = await OrderModel.findById(orderId);
     if (!order) {
       return NextResponse.json(
         { message: "Order not found." },

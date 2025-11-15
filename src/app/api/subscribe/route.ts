@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { User, IPushSubscription } from "@/models/User";
+import { User } from "@/models/User";
+import type { IPushSubscription } from "@/types/index";
 
 export async function POST(req: NextRequest) {
   try {

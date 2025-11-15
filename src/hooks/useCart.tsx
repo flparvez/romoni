@@ -1,6 +1,6 @@
 "use client";
 
-import { IIProduct, IVariant } from "@/types/iproduct";
+import type{ IVariant, IProduct } from "@/types/index";
 import React, {
   createContext,
   useContext,
@@ -17,7 +17,7 @@ export interface IVariantOption {
   sku?: string;
 }
 
-export interface IProduct {
+export interface IIProduct {
   _id: string;
   name: string;
   iname?: string;
@@ -58,7 +58,7 @@ interface CartContextType {
   ) => void;
   clearCart: () => void;
   fromProduct: (
-    product: IIProduct,
+    product: IProduct,
     quantity?: number,
     selectedVariantOptions?: Record<string, string>
   ) => CartItem;
@@ -77,10 +77,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // ✅ Load cart *after* hydration
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CART_KEY);
-      if (stored) setCart(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setCart(parsed);
+        }
+      }
     } catch (error) {
       console.error("Failed to load cart:", error);
     } finally {
@@ -88,13 +94,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // ✅ Save to localStorage only after initialization
   useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(CART_KEY, JSON.stringify(cart));
-      } catch (error) {
-        console.error("Failed to save cart:", error);
-      }
+    if (!isInitialized) return;
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (error) {
+      console.error("Failed to save cart:", error);
     }
   }, [cart, isInitialized]);
 
@@ -105,7 +111,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       selectedVariantOptions?: Record<string, string>
     ): number => {
       let finalPrice = basePrice;
-      let priceFound = false;
 
       if (variants && selectedVariantOptions) {
         for (const variant of variants) {
@@ -113,9 +118,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const option = variant.options?.find((opt) => opt.value === selectedValue);
 
           if (option?.price !== undefined) {
-            // Price is overridden by a variant option
             finalPrice = option.price;
-            priceFound = true;
             break;
           }
         }
@@ -149,10 +152,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const removeFromCart = useCallback(
-    (
-      productId: string,
-      selectedVariantOptions?: Record<string, string>
-    ) => {
+    (productId: string, selectedVariantOptions?: Record<string, string>) => {
       setCart((prev) =>
         prev.filter(
           (i) =>
@@ -166,11 +166,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const updateQuantity = useCallback(
-    (
-      productId: string,
-      quantity: number,
-      selectedVariantOptions?: Record<string, string>
-    ) => {
+    (productId: string, quantity: number, selectedVariantOptions?: Record<string, string>) => {
       setCart((prev) =>
         prev.map((i) =>
           i.productId === productId &&
@@ -214,10 +210,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const getItem = useCallback(
-    (
-      productId: string,
-      selectedVariantOptions?: Record<string, string>
-    ) => {
+    (productId: string, selectedVariantOptions?: Record<string, string>) => {
       return cart.find(
         (i) =>
           i.productId === productId &&
@@ -231,11 +224,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = useCallback(() => setCart([]), []);
 
   const fromProduct = useCallback(
-    (
-      product: IIProduct,
-      quantity = 1,
-      selectedVariantOptions?: Record<string, string>
-    ): CartItem => {
+    (product: IProduct, quantity = 1, selectedVariantOptions?: Record<string, string>): CartItem => {
       const itemPrice = calculatePriceWithVariants(
         product.price,
         product.variants,
@@ -256,10 +245,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     [calculatePriceWithVariants]
   );
 
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // ✅ total must be stable (0 before init)
+  const total = isInitialized
+    ? cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    : 0;
 
   return (
     <CartContext.Provider

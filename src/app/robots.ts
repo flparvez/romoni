@@ -1,7 +1,7 @@
 // app/robots.ts
 import { MetadataRoute } from 'next'
 
-const baseUrl = 'https://a1romoni.vercel.app'
+const baseUrl = 'https://a1romoni.xyz'
 
 export default function robots(): MetadataRoute.Robots {
   return {

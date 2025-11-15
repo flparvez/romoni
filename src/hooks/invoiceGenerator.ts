@@ -1,20 +1,20 @@
 "use client";
+import type { IOrder } from "@/types/index";
 import jsPDF from "jspdf";
 // @ts-ignore
 import autoTable from "jspdf-autotable";
-import { IIOrder } from "@/types/product";
 
-export const generateInvoicePdf = (order: IIOrder) => {
+export const generateInvoicePdf = (order: IOrder) => {
   if (typeof window === "undefined") return;
 
   const shopName = "A1 Romoni";
-  const shopAddress = "8R8Q+W6C Karnaphuli, Chittagong";
+  const shopAddress = "Elephant Road, Dhaka, Bangladesh";
   const shopPhone = "01608257876";
-  const shopEmail = "contact@a1romoni.shop";
+  const shopEmail = "contact@uniquestorebd.store";
   const currency = "Tk";
 
   const shopLogo =
-    "https://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg?tr=w-96,c-at_max";
+    "https://ik.imagekit.io/pemifp53t/1758798108980-481999217_122151293954497451_784184120423218190_n__1__2U8VXOFIX.jpg?updatedAt=1758798111309";
 
   const doc = new jsPDF({
     orientation: "portrait",
