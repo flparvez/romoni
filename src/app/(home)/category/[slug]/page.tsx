@@ -82,7 +82,7 @@ export default async function ProductByCategory({ params, searchParams }: Props)
       totalPages: number;
       currentPage: number;
     }>(
-      `${SITE_URL}/api/products?category=${slug}&page=${currentPage}&limit=20`
+      `${SITE_URL}/api/products?category=${slug}&page=${currentPage}&limit=18`
     ),
   ]);
 

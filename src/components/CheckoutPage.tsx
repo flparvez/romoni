@@ -1,23 +1,14 @@
 "use client";
 
 import { useCart } from "@/hooks/useCart";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CartItemRow } from "./CartItemRow";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
-/* ---------------- SHA256 HASH ---------------- */
-async function sha256(value: string) {
-  if (!value) return "";
-  const encoder = new TextEncoder();
-  const data = encoder.encode(value.trim().toLowerCase());
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+/* ---------------- DELIVERY CHARGES ---------------- */
 
 const deliveryCharges = { dhaka: 60, outsideDhaka: 120 };
 
@@ -117,8 +108,6 @@ const CheckoutPage = () => {
     }
   }, [cart, subtotal, deliveryCharge, form]);
 
-  /* ---------------- ONE-TIME PURCHASE PROTECTION ---------------- */
-  const hasPurchasedRef = useRef(false);
 
   /* ---------------- SUBMIT ORDER ---------------- */
   const handleSubmit = async () => {
@@ -155,19 +144,11 @@ const CheckoutPage = () => {
       if (!res.ok) throw new Error(data.error || "Order failed");
 
       /* -------- PURCHASE EVENTS (RUN ONLY ONCE) -------- */
-      if (!hasPurchasedRef.current) {
-        hasPurchasedRef.current = true;
 
         const firstName = form.fullName.split(" ")[0] || "";
         const lastName = form.fullName.split(" ")[1] || "";
 
-        const hashedUserData = {
-          fn: await sha256(firstName),
-          ln: await sha256(lastName),
-          ph: await sha256(form.phone),
-          ct: await sha256(form.city || ""),
-          country: await sha256("Bangladesh"),
-        };
+      
 
         const userData = {
           email_address: "contact@romoni.xyz",
@@ -201,21 +182,8 @@ const CheckoutPage = () => {
           },
         });
 
-        // Facebook Pixel PURCHASE
-        if (window.fbq) {
-          window.fbq("track", "Purchase", {
-            value: data.order.totalAmount,
-            currency: "BDT",
-            content_type: "product",
-            contents: items.map((i) => ({
-              id: i.item_id,
-              quantity: i.quantity,
-              item_price: i.price,
-            })),
-            user_data: hashedUserData,
-          });
-        }
-      }
+      
+      
 
       toast.success("অর্ডার সফল হয়েছে!", { duration: 2000 });
       clearCart();

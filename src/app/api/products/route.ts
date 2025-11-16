@@ -123,14 +123,22 @@ export async function GET(req: NextRequest) {
     if (isActive !== null) {
       query.isActive = isActive === "true";
     }
+/** ------------------------------------------------
+ * 🟧 Determine sort order 
+ * ------------------------------------------------*/
+let sortOption: any = { createdAt: -1 }; // default sort
 
-    /** 🟧 Determine sort order */
-    let sortOption: any = { lastUpdatedIndex: -1 }; // default sort
+const hasFilters =
+  (search && search.trim() !== "") ||
+  (category && category.trim() !== "") ||
+  page !== 1 ||
+  isActive !== null;
 
-    // ✔ If no filters + NO page param → prioritize lastUpdatedIndex
-    if (category && rawPage === null) {
-      sortOption = { createdAt: -1 };
-    }
+// ✔ If NO filters + limit=18 → prioritize lastUpdatedIndex
+if (limit === 18) {
+  sortOption = { lastUpdatedIndex: -1 };
+}
+
 
     /** 🟦 Fetch paginated products */
     const [products, totalCount] = await Promise.all([
