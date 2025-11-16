@@ -38,35 +38,45 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [activeTab, setActiveTab] = useState("description");
   const { addProductToCart } = useAddToCart();
   const { getItem } = useCart();
-  const router = useRouter();
 
   //  datalayer
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && product) {
-      window.dataLayer = window.dataLayer || [];
+useEffect(() => {
+  if (typeof window !== "undefined" && product) {
+    window.dataLayer = window.dataLayer || [];
 
-      window.dataLayer.push({
-        event: "ViewContent", // GTM custom event name (can also use "view_content")
-        ecommerce: {
-          value: product.price,
-          currency: "BDT", // change this if your currency differs
-          items: [
-            {
-              item_id: product._id,
-              item_name: product.name,
-              item_category: product.category?.name || "Unknown",
-              price: product.price,
-              discount: product.discount,
-              quantity: 1,
-              image_url: product.images?.[0]?.url || "",
-              slug: product.slug,
-            },
-          ],
-        },
-      });
-    }
-  }, [product]);
+    const item = {
+      item_id: product._id,
+      item_name: product.name,
+      item_category: product.category?.name || "Unknown",
+      price: product.price,
+      discount: product.discount,
+      quantity: 1,
+      image_url: product.images?.[0]?.url || "",
+      slug: product.slug,
+    };
+
+    // GA4 event (required)
+    window.dataLayer.push({
+      event: "view_item",
+      ecommerce: {
+        currency: "BDT",
+        value: product.price,
+        items: [item],
+      },
+    });
+
+    // Facebook Pixel event (optional but recommended)
+    window.dataLayer.push({
+      event: "ViewContent",
+      content_type: "product",
+      content_ids: [product._id],
+      value: product.price,
+      currency: "BDT",
+      items: [item],
+    });
+  }
+}, [product]);
 
   // end
 
