@@ -21,24 +21,15 @@ import {
 import { ISection, IFAQ } from "@/models/Landing";
 import { ArrowUp, ArrowDown, Image as ImageIcon, Link as LinkIcon, Package, Sparkles, Trash2, PlusCircle } from "lucide-react";
 
-import  type { IProductImage, IVariant } from "@/types/index";
+import  type { IProduct, IProductImage, IVariant } from "@/types/index";
 
-interface IProductLite {
-  _id: string;
-  name: string;
-  price: number;
-  images?: IProductImage[];
-  variants?: IVariant[];
-  
-reviews?: IProductImage[];
-video?: string;
-}
 
 interface ILandingData {
   id: string;
   heroTitle: string;
   heroSubtitle: string;
   logoUrl: string;
+  videoUrl?: string;
   ctaText: string;
   isDeliveryChargeFree: boolean;
   sections: ISection[];
@@ -72,7 +63,7 @@ const LandingPageEditor = ({id}: { id: string}) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<ILandingData | null>(null);
 
-  const [products, setProducts] = useState<IProductLite[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   useEffect(() => {
@@ -104,7 +95,7 @@ setSelectedProducts(normalizedProductIds);
     const loadProducts = async () => {
       const res = await fetch("/api/products", { cache: "no-store" });
       const json = await res.json();
-      if (json.success) setProducts(json.products as IProductLite[]);
+      if (json.success) setProducts(json.products);
     };
     loadProducts();
   }, []);
@@ -292,6 +283,14 @@ setSelectedProducts(normalizedProductIds);
                 <Label className="text-white/90 flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Logo URL</Label>
                 <Input className="bg-white/90" value={data.logoUrl} onChange={(e) => setField("logoUrl", e.target.value)} placeholder="https://cdn.example.com/logo.png" />
               </div>
+
+      <div className="grid gap-2">
+                <Label className="text-white/90 flex items-center gap-2"><LinkIcon className="h-4 w-4" /> video URL</Label>
+                <Input className="bg-white/90" value={data.videoUrl} onChange={(e) => setField("videoUrl", e.target.value)} placeholder="yt emmed" />
+              </div>
+
+
+
               <div className="rounded-xl bg-white/80 backdrop-blur border shadow-inner p-4 flex items-center justify-center h-[160px]">
                 {data.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

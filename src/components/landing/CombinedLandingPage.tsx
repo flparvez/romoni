@@ -117,10 +117,10 @@ useEffect(() => {
       )}
 
       {/* ✅ OPTIONAL VIDEO (if exists) */}
-      {product1?.video? (
+      {pageContent?.videoUrl? (
         <section className="py-10 px-4 max-w-4xl mx-auto">
           <div className="relative aspect-video rounded-2xl overflow-hidden shadow-xl">
-            <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${product1.video}`} allowFullScreen />
+            <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${pageContent.videoUrl}`} allowFullScreen />
           </div>
         </section>
       ) : null}

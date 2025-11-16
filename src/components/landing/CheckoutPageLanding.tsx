@@ -269,7 +269,28 @@ export default function LandingCheckoutPage({
         </button>
       </div>
 
-     
+     <style>{`
+        .input-dark {
+          width: 100%;
+          background: #1A1A1E;
+          border: 1px solid #3a3a3f;
+          padding: 12px;
+          border-radius: 10px;
+          color: white;
+          outline: none;
+        }
+        .input-dark:focus {
+          border-color: #3b82f6;
+        }
+        .radio-dark {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          color: #ddd;
+        }
+      `}</style>
     </div>
+    
   );
 }

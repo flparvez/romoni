@@ -10,6 +10,7 @@ export interface ILandingPageContent extends Document {
   isDeliveryChargeFree: boolean;
   heroTitle: string;
   heroSubtitle: string;
+  videoUrl?: string;
   logoUrl: string;
   ctaText: string;
   products: IProduct[]; // refs Product
@@ -42,6 +43,7 @@ const LandingPageContentSchema = new Schema<ILandingPageContent>(
     heroTitle: { type: String, default: "Your Product Title" },
     heroSubtitle: { type: String, default: "Explain why this product matters." },
     logoUrl: { type: String, default: "" },
+    videoUrl: { type: String, default: "" },
     ctaText: { type: String, default: "Order Now" },
     products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     sections: { type: [SectionSchema], default: [] },
