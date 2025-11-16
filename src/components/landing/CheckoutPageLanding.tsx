@@ -5,8 +5,7 @@ import { LandingAddToCart } from "@/hooks/LandingAddToCart";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { IOrderItem, IProduct } from "@/types";
-import { Copy } from "lucide-react";
+import type { IProduct } from "@/types";
 
 /* ----------------------------- DATALAYER HELPERS ----------------------------- */
 
@@ -45,18 +44,20 @@ export default function LandingCheckoutPage({
   const [deliveryType, setDeliveryType] =
     useState<"insideDhaka" | "outsideDhaka">("insideDhaka");
 
+  /* ---------------- DELIVERY CHARGE ---------------- */
   const deliveryCharge = isDeliveryChargeFree
     ? 0
     : deliveryType === "insideDhaka"
     ? deliveryCharges.dhaka
     : deliveryCharges.outsideDhaka;
 
-  /* ----------------- RESET CART & ADD SELECTED PRODUCT ---------------- */
+  /* ---------------- RESET CART FOR SELECTED PRODUCT ---------------- */
   useEffect(() => {
     clearCart();
     addProductToCart(selectedProduct, 1);
   }, [selectedProduct]);
 
+  /* ---------------- TOTAL CALC ---------------- */
   const subtotal = useMemo(
     () => cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
     [cart]
@@ -64,6 +65,7 @@ export default function LandingCheckoutPage({
 
   const total = subtotal + deliveryCharge;
 
+  /* ---------------- FORM ---------------- */
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -74,7 +76,7 @@ export default function LandingCheckoutPage({
   const handleChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  /* ------------------------------- SUBMIT ORDER ------------------------------- */
+  /* ---------------- SUBMIT ORDER ---------------- */
   const handleSubmit = async () => {
     if (!form.fullName || !form.phone || !form.address)
       return toast.error("অনুগ্রহ করে সব তথ্য পূরণ করুন!");
@@ -85,10 +87,10 @@ export default function LandingCheckoutPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          paymentType: "COD", // ALWAYS COD
+          paymentType: "COD",
           trxId: "",
           deliveryCharge,
-          paytorider: total, // Full COD
+          paytorider: total, // COD full
           cartTotal: subtotal,
           cartItems: cart.map((item) => ({
             productId: item.productId,
@@ -103,34 +105,41 @@ export default function LandingCheckoutPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Order failed");
 
-      /* ---------------------- PURCHASE EVENT (SUCCESS ONLY) ---------------------- */
-      const items = data.items.map((item: IOrderItem) => ({
-        item_id: item.product._id,
-        item_name: item.product.name,
-        price: item.price,
-        quantity: item.quantity,
+      /* ---------------- BUILD PURCHASE ITEMS ---------------- */
+      const items = cart.map((i) => ({
+        item_id: i.productId,
+        item_name: i.name,
+        price: i.price,
+        quantity: i.quantity,
       }));
+
+      /* --------------------------- PURCHASE EVENT --------------------------- */
 
       pushDL({
         event: "purchase",
         ecommerce: {
-          value: data.totalAmount,
+          value: data.order.totalAmount,
           currency: "BDT",
           transaction_id: data.order._id,
-          shipping: data.deliveryCharge,
+          shipping: data.order.deliveryCharge,
           tax: 0,
           items,
+          user_data: {
+            phone_number: data.order.phone,
+            full_name: data.order.fullName,
+            address: data.order.address,
+          },
         },
       });
 
       fbTrack("Purchase", {
-        value: data.totalAmount,
+        value: data.order.totalAmount,
         currency: "BDT",
         contents: items,
         content_type: "product",
       });
 
-      /* --------------------------------------------------------------------------- */
+      /* --------------------------------------------------------------------- */
 
       toast.success("✅ অর্ডার সফল হয়েছে!");
       clearCart();
@@ -140,7 +149,7 @@ export default function LandingCheckoutPage({
     }
   };
 
-  /* -------------------- BEGIN CHECKOUT EVENT (ONCE) -------------------- */
+  /* ---------------- BEGIN CHECKOUT EVENT ---------------- */
   useEffect(() => {
     if (cart.length === 0) return;
 
@@ -168,7 +177,7 @@ export default function LandingCheckoutPage({
     });
   }, []);
 
-  /* ----------------------------- UI BELOW ----------------------------- */
+  /* ----------------------------- UI ----------------------------- */
 
   return (
     <div className="max-w-3xl mx-auto p-4 py-4 pb-12 bg-[#0B0B0D] text-white min-h-screen">
@@ -248,11 +257,9 @@ export default function LandingCheckoutPage({
         {isDeliveryChargeFree && (
           <p className="text-green-400 font-semibold">🚚 ফ্রি ডেলিভারি ✅</p>
         )}
-
-        {/* ❌ No payment fields (COD only) */}
       </div>
 
-      {/* Sticky Order Button */}
+      {/* Submit */}
       <div className="bg-[#111215] border-t border-gray-800 p-4 shadow-lg">
         <button
           onClick={handleSubmit}

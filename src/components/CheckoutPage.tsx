@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { CartItemRow } from "./CartItemRow";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import type { IOrderItem, IProduct } from "@/types/index";
+import type { IProduct } from "@/types/index";
 
-// ---------- Utility: SHA256 hashing for FB Pixel user data ----------
+/* ---------------- SHA256 HASH ---------------- */
 async function sha256(value: string) {
   if (!value) return "";
   const encoder = new TextEncoder();
@@ -20,7 +20,7 @@ async function sha256(value: string) {
     .join("");
 }
 
-// ---------- Pixel helper functions ----------
+/* ---------------- Pixel Helpers ---------------- */
 function fbTrack(event: string, data: any) {
   if (typeof window !== "undefined" && window.fbq) {
     window.fbq("track", event, data);
@@ -34,6 +34,7 @@ function pushDL(event: any) {
   }
 }
 
+/* ---------------- TYPES ---------------- */
 interface FormData {
   fullName: string;
   phone: string;
@@ -47,7 +48,6 @@ const CheckoutPage = () => {
   const { cart, clearCart } = useCart();
   const router = useRouter();
 
-  // ---------------------- STATE ----------------------
   const [form, setForm] = useState<FormData>({
     fullName: "",
     phone: "",
@@ -55,31 +55,33 @@ const CheckoutPage = () => {
     city: "",
   });
 
-  const [deliveryCharge, setDeliveryCharge] = useState(deliveryCharges.dhaka);
+
+  const [deliveryType, setDeliveryType] = useState<"dhaka" | "outsideDhaka">("dhaka");
+
   const [loading, setLoading] = useState(false);
 
   const subtotal = useMemo(
     () => cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
     [cart]
   );
+const deliveryCharge =
+  deliveryType === "dhaka"
+    ? deliveryCharges.dhaka
+    : deliveryCharges.outsideDhaka;
 
   const total = subtotal + deliveryCharge;
 
   const handleFormChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleDeliveryChange = (e: any) => {
-    setDeliveryCharge(
-      e.target.value === "insideDhaka"
-        ? deliveryCharges.dhaka
-        : deliveryCharges.outsideDhaka
-    );
-  };
 
-  // ---------------------- SUBMIT ORDER ----------------------
+
+  /* ---------------- SUBMIT ORDER ---------------- */
   const handleSubmit = async () => {
-    if (!form.fullName || !form.phone || !form.address)
-      return toast.error("সব ফিল্ড পূরণ করুন!");
+    if (!form.fullName || !form.phone || !form.address) {
+      toast.error("সব ফিল্ড পূরণ করুন!");
+      return;
+    }
 
     setLoading(true);
 
@@ -92,7 +94,7 @@ const CheckoutPage = () => {
           paymentType: "COD",
           trxId: "",
           deliveryCharge,
-          paytorider: total, // COD full
+          paytorider: total,
           cartTotal: subtotal,
           cartItems: cart.map((item) => ({
             productId: item.productId,
@@ -108,7 +110,7 @@ const CheckoutPage = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Order failed");
 
-      // ---------- Prepare FB Pixel user_data ----------
+      /* -------- USER DATA HASH -------- */
       const firstName = form.fullName.split(" ")[0] || "";
       const lastName = form.fullName.split(" ")[1] || "";
 
@@ -120,22 +122,22 @@ const CheckoutPage = () => {
         country: await sha256("Bangladesh"),
       };
 
-      // ---------- PURCHASE EVENT (fires ONLY after success) ----------
-      const items = data.items.map((item: IOrderItem) => ({
-        item_id: item.product._id,
-        item_name: item.product.name,
-        price: item.price,
-        quantity: item.quantity,
+      /* -------- ITEMS FOR PIXEL -------- */
+      const items = cart.map((i) => ({
+        item_id: i.productId,
+        item_name: i.name,
+        price: i.price,
+        quantity: i.quantity,
       }));
 
-      // Google Tag Manager purchase
+      /* -------- GTM PURCHASE -------- */
       pushDL({
         event: "purchase",
         ecommerce: {
           transaction_id: data.order._id,
-          value: data.totalAmount,
+          value: data.order.totalAmount,
           currency: "BDT",
-          shipping: data.deliveryCharge,
+          shipping: data.order.deliveryCharge,
           tax: 0,
           items,
           user_data: {
@@ -148,20 +150,18 @@ const CheckoutPage = () => {
         },
       });
 
-      // Facebook Pixel purchase
+      /* -------- FACEBOOK PURCHASE -------- */
       fbTrack("Purchase", {
-        value: data.totalAmount,
+        value: data.order.totalAmount,
         currency: "BDT",
-        contents: items.map((i:IOrderItem) => ({
-          id: i.product._id,
+        contents: cart.map((i) => ({
+          id: i.productId,
           quantity: i.quantity,
           item_price: i.price,
         })),
         content_type: "product",
         user_data: userData,
       });
-
-      // -------- END Purchase event --------
 
       toast.success("অর্ডার সফল হয়েছে!", { duration: 2000 });
       clearCart();
@@ -173,15 +173,15 @@ const CheckoutPage = () => {
     }
   };
 
-  // ---------------------- BEGIN CHECKOUT EVENT ----------------------
+  /* ---------------- BEGIN CHECKOUT EVENT ---------------- */
   useEffect(() => {
     if (cart.length === 0) return;
 
-    const items = cart.map((item) => ({
-      item_id: item.productId,
-      item_name: item.name,
-      price: item.price,
-      quantity: item.quantity,
+    const items = cart.map((i) => ({
+      item_id: i.productId,
+      item_name: i.name,
+      price: i.price,
+      quantity: i.quantity,
     }));
 
     pushDL({
@@ -201,161 +201,146 @@ const CheckoutPage = () => {
     });
   }, []);
 
-  // ---------------------- UI ----------------------
+  /* ---------------- DARK UI ---------------- */
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100 py-6 sm:py-10 px-3 sm:px-6 overflow-x-hidden"
+      transition={{ duration: 0.4 }}
+      className="min-h-screen w-full bg-[#0B0B0D] text-white py-6 sm:py-10 px-3 sm:px-6"
     >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center mb-6 gap-3">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-full bg-white shadow hover:shadow-md text-gray-600 hover:text-blue-600 transition-all"
+            className="p-2 rounded-full bg-[#1A1A1E] text-white hover:bg-[#26262A] transition shadow-md"
           >
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Checkout
-          </h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">Checkout</h2>
         </div>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-            className="lg:col-span-2 bg-white rounded-2xl shadow-md border border-gray-100 p-6 sm:p-8 space-y-8"
-          >
-            <h3 className="text-xl font-bold text-gray-900 border-b pb-4">
+          {/* LEFT SECTION */}
+          <motion.div className="lg:col-span-2 bg-[#111215] rounded-2xl p-6 shadow-xl border border-[#1F1F22]">
+            <h3 className="text-xl font-bold border-b border-[#222] pb-3">
               📝 অর্ডার কনফার্ম করতে ফর্ম পূরণ করুন
             </h3>
 
-            {/* Customer Info */}
-            <section className="space-y-4">
-              <h4 className="text-lg font-semibold text-gray-800">
-                👤 আপনার তথ্য
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  name="fullName"
-                  placeholder="আপনার নাম*"
-                  value={form.fullName}
-                  onChange={handleFormChange}
-                  className="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500"
+            {/* CART ITEMS */}
+            <section className="mt-6 space-y-3">
+              {cart.map((i) => (
+                <CartItemRow
+                  key={i.productId + JSON.stringify(i.selectedVariantOptions)}
+                  item={i}
                 />
-                <input
-                  name="phone"
-                  placeholder="মোবাইল নাম্বার*"
-                  value={form.phone}
-                  onChange={handleFormChange}
-                  className="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              ))}
+            </section>
 
+            {/* Inputs */}
+            <section className="mt-6 space-y-4">
+              <input
+                name="fullName"
+                placeholder="আপনার নাম *"
+                value={form.fullName}
+                onChange={handleFormChange}
+                className="w-full p-3 rounded-xl bg-[#1A1A1E] border border-[#333] text-white focus:border-blue-500"
+              />
+              <input
+                name="phone"
+                placeholder="মোবাইল নম্বর *"
+                value={form.phone}
+                onChange={handleFormChange}
+                className="w-full p-3 rounded-xl bg-[#1A1A1E] border border-[#333] text-white focus:border-blue-500"
+              />
               <input
                 name="address"
-                placeholder="ঠিকানা* (জেলা , উপজেলা , গ্রাম)"
+                placeholder="ডেলিভারি ঠিকানা *"
                 value={form.address}
                 onChange={handleFormChange}
-                className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 rounded-xl bg-[#1A1A1E] border border-[#333] text-white focus:border-blue-500"
               />
             </section>
 
-            {/* Delivery Options */}
-            <section>
-              <h4 className="text-lg font-semibold text-gray-800">
-                🚚 ডেলিভারি চার্জ
-              </h4>
+            {/* Delivery */}
+      <section className="mt-6">
+  <h4 className="text-lg font-semibold">🚚 ডেলিভারি চার্জ</h4>
 
-              <div className="flex flex-col gap-3 mt-2">
-                {Object.entries({
-                  insideDhaka: deliveryCharges.dhaka,
-                  outsideDhaka: deliveryCharges.outsideDhaka,
-                }).map(([key, val]) => (
-                  <label
-                    key={key}
-                    className={`flex justify-between items-center border p-4 rounded-xl cursor-pointer ${
-                      deliveryCharge === val
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-400"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="delivery"
-                        value={key}
-                        checked={deliveryCharge === val}
-                        onChange={handleDeliveryChange}
-                        className="accent-blue-600"
-                      />
-                      <span className="font-medium text-gray-800">
-                        {key === "insideDhaka"
-                          ? "ঢাকা সিটির ভিতরে"
-                          : "ঢাকা সিটির বাইরে"}
-                      </span>
-                    </div>
-                    <span className="font-semibold text-gray-900">
-                      {val} ৳
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </section>
+  <div className="mt-3 space-y-3">
+    <label
+      className={`flex justify-between items-center p-4 rounded-xl cursor-pointer border transition ${
+        deliveryType === "dhaka"
+          ? "border-blue-500 bg-blue-900/20"
+          : "border-[#333] bg-[#1A1A1E] hover:border-blue-600"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <input
+          type="radio"
+          name="delivery"
+          value="dhaka"
+          checked={deliveryType === "dhaka"}
+          onChange={() => setDeliveryType("dhaka")}
+          className="accent-blue-500"
+        />
+        <span className="font-medium">ঢাকা সিটির ভিতরে - ৳60</span>
+      </div>
+    </label>
+
+    <label
+      className={`flex justify-between items-center p-4 rounded-xl cursor-pointer border transition ${
+        deliveryType === "outsideDhaka"
+          ? "border-blue-500 bg-blue-900/20"
+          : "border-[#333] bg-[#1A1A1E] hover:border-blue-600"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <input
+          type="radio"
+          name="delivery"
+          value="outsideDhaka"
+          checked={deliveryType === "outsideDhaka"}
+          onChange={() => setDeliveryType("outsideDhaka")}
+          className="accent-blue-500"
+        />
+        <span className="font-medium">ঢাকা সিটির বাইরে - ৳120</span>
+      </div>
+    </label>
+  </div>
+</section>
+
           </motion.div>
 
-          {/* Cart Items */}
-          <section className="space-y-4">
-            {cart.map((item) => (
-              <CartItemRow
-                key={item.productId + JSON.stringify(item.selectedVariantOptions)}
-                item={item}
-              />
-            ))}
-          </section>
-
-          {/* Right */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-            className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 sm:p-8 h-fit sticky top-24 space-y-6"
-          >
-            <h3 className="text-2xl font-bold text-gray-900 border-b pb-4">
+          {/* RIGHT SUMMARY */}
+          <motion.div className="bg-[#111215] rounded-2xl p-6 shadow-xl border border-[#1F1F22] h-fit sticky top-24">
+            <h3 className="text-2xl font-bold border-b border-[#222] pb-4">
               🧾 Order Summary
             </h3>
 
-            <div className="space-y-3">
-              <div className="flex justify-between">
+            <div className="mt-4 space-y-3">
+              <div className="flex justify-between text-gray-300">
                 <span>Subtotal</span>
-                <span className="font-bold">৳{subtotal}</span>
+                <span>৳{subtotal}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between text-gray-300">
                 <span>Delivery</span>
-                <span className="font-bold">৳{deliveryCharge}</span>
+                <span>৳{deliveryCharge}</span>
               </div>
-              <div className="flex justify-between border-t pt-3 text-xl font-bold">
+
+              <div className="flex justify-between text-xl font-bold border-t border-[#222] pt-3">
                 <span>Total</span>
-                <span className="text-green-600">৳{total}</span>
+                <span className="text-green-400">৳{total}</span>
               </div>
             </div>
 
-            <motion.button
+            <button
               onClick={handleSubmit}
               disabled={loading}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full py-4 mt-4 text-lg font-bold text-white rounded-xl bg-gradient-to-r from-blue-600 to-purple-600"
+              className="w-full mt-5 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold shadow-lg hover:opacity-90 transition"
             >
-              {loading ? "Processing..." : "✅ Confirm Order"}
-            </motion.button>
+              {loading ? "Processing..." : "Confirm Order"}
+            </button>
           </motion.div>
         </div>
       </div>

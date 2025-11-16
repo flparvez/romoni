@@ -32,7 +32,7 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: ["FULL", "PARTIAL"],
       default: "FULL",
-      required: true,
+      // required: true,
     },
 
     pathaoStatus: {

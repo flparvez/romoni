@@ -103,8 +103,8 @@ export async function POST(req: NextRequest) {
       fullName,
       phone,
       address,
-      paymentType,
-      trxId,
+      // paymentType,
+      // trxId,
       cartItems,
       paytorider,
       deliveryCharge,
@@ -115,8 +115,8 @@ export async function POST(req: NextRequest) {
     if (
       !fullName ||
       !phone ||
-      !address ||
-      !paymentType
+      !address 
+      // !paymentType
 
     ) {
       return NextResponse.json(
@@ -135,8 +135,8 @@ export async function POST(req: NextRequest) {
       phone,
       address,
 
-      paymentType,
-      trxId: trxId,
+      // paymentType,
+      // trxId: trxId,
       deliveryCharge,
       totalAmount: cartTotal + deliveryCharge,
       paytorider:paytorider,

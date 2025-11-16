@@ -48,7 +48,7 @@ export const CartItemRow = ({ item }: Props) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
       layout
-      className="flex flex-col md:flex-row gap-4 p-4 border border-gray-200 rounded-xl bg-white shadow-sm"
+      className="flex flex-col md:flex-row gap-4 p-4 border border-gray-200 rounded-xl bg-black text-white shadow-sm"
     >
       <div className="shrink-0 flex items-center gap-4">
         <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
@@ -62,21 +62,21 @@ export const CartItemRow = ({ item }: Props) => {
         </div>
 
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-800">{item.name}</h4>
+          <h4 className="font-semibold text-white">{item.name}</h4>
 
-          <div className="text-sm text-gray-600 mt-1">
-            <strong className="text-purple-600">
+          <div className="text-sm text-white mt-1">
+            <strong className="text-white">
               ৳{effectivePrice.toLocaleString()}
             </strong>
             {Object.keys(selectedVariants).length > 0 &&
               Object.keys(selectedVariants).map((key) => (
-                <span key={key} className="ml-2 text-gray-500">
+                <span key={key} className="ml-2 text-white">
                   ({key}: {selectedVariants[key]})
                 </span>
               ))}
           </div>
 
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-white mt-1">
             Subtotal: ৳{subtotal.toLocaleString()}
           </div>
         </div>
@@ -88,12 +88,12 @@ export const CartItemRow = ({ item }: Props) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Decrease quantity"
-          className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+          className="p-2 bg-black text-white rounded-full hover:bg-gray-300 transition-colors"
         >
           <Minus size={16} />
         </motion.button>
 
-        <span className="px-3 py-1 border rounded-full min-w-[40px] text-center font-medium text-gray-800">
+        <span className="px-3 py-1 border rounded-full min-w-[40px] text-center font-medium text-white">
           {item.quantity}
         </span>
 
@@ -102,7 +102,7 @@ export const CartItemRow = ({ item }: Props) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Increase quantity"
-          className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+          className="p-2 bg-black text-white rounded-full hover:bg-orange-300 transition-colors"
         >
           <Plus size={16} />
         </motion.button>
@@ -112,7 +112,7 @@ export const CartItemRow = ({ item }: Props) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Remove from cart"
-          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+          className="p-2 bg-black text-white rounded-full hover:bg-red-600 transition-colors"
         >
           <Trash2 size={16} />
         </motion.button>
