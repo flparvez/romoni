@@ -3,10 +3,11 @@
 import type { IProduct } from "@/types/index";
 import { useCart } from "./useCart";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const useAddToCart = () => {
   const { addToCart, fromProduct } = useCart();
-
+const router = useRouter();
   const addProductToCart = (
     product: IProduct,
     quantity: number = 1,
@@ -39,6 +40,7 @@ export const useAddToCart = () => {
     }
 
     toast.success(`${product.name} added to cart!`);
+    router.push("/cart");
   };
 
   return { addProductToCart };

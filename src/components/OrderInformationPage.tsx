@@ -6,7 +6,7 @@ import type { IOrder, IOrderItem } from "../types/index";
 import { Image } from "@imagekit/next";
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import Link from "next/link";
-import { CartItem } from "@/hooks/useCart";
+
 import { Button } from "./ui/button";
 
 const OrderInorderationPage = ({ order }: { order: IOrder }) => {
@@ -23,7 +23,7 @@ const OrderInorderationPage = ({ order }: { order: IOrder }) => {
           <Image
             width={80}
             height={80}
-           src="https://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
+           src="htts://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
             alt="Logo"
             className="w-20 h-20 rounded-full shadow-lg"
           />

@@ -24,11 +24,13 @@ import { Badge } from "../ui/badge";
 import FraudCheck from "./FraudCheck";
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import type { IOrder } from "@/types/index";
+type Status = "PENDING" | "APPROVED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 type Props = {
   paginatedOrders: IOrder[];
   onDelete: (id: string) => void;
-  onUpdateStatus: (id: string, status: string) => void;
+  
+onUpdateStatus: (id: string, status: Status) => void;
   // ✅ Selection control
   selectedOrders: string[];
   onToggleSelect: (id: string) => void;
@@ -45,6 +47,7 @@ export default function AllOrderTable({
   onToggleSelect,
   onToggleAll,
   isPickupRequested,
+ 
 }: Props) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [fraudResults, setFraudResults] = useState<Record<string, any>>({});

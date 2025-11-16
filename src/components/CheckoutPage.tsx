@@ -337,7 +337,7 @@ const deliveryCharge =
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full mt-5 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold shadow-lg hover:opacity-90 transition"
+              className="w-full mt-2 mb-3 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold shadow-lg hover:opacity-90 transition"
             >
               {loading ? "Processing..." : "Confirm Order"}
             </button>
