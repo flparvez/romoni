@@ -10,42 +10,6 @@ import { CartItem } from "@/hooks/useCart";
 import { Button } from "./ui/button";
 
 const OrderInorderationPage = ({ order }: { order: IOrder }) => {
-  if (!order) return null;
-// ✅ Google Tag Manager Data Layer event (Enhanced)
-if (typeof window !== "undefined") {
-  window.dataLayer = window.dataLayer || [];
-
-  const userData = {
-    email_address: "contact@a1romoni.xyz", // Add if you collect email later
-    phone_number: order.phone || "",
-    first_name: order.fullName?.split(" ")[0] || "",
-    last_name: order.fullName?.split(" ")[1] || "",
-    country: "Bangladesh",
-    city: order.address?.split(",")[0] || "",
-    postal_code: "",
-    coupon: "", // Add if using coupons
-  };
-
-  window.dataLayer.push({
-    event: "purchase",
-    order_id: order.orderId,
-    ecommerce: {
-      transaction_id: order.orderId,
-      affiliation: "Uniquestore Checkout",
-      value: order.totalAmount,
-      currency: "BDT",
-      tax: 0,
-      shipping: order.deliveryCharge,
-      user_data: userData,
-      items: order.items.map((item) => ({
-        item_id: item.product._id,
-        item_name: item.product.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-    },
-  });
-}
 
   return (
     <main className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center py-4 px-2">
