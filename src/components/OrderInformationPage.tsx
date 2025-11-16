@@ -7,193 +7,178 @@ import { Image } from "@imagekit/next";
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import Link from "next/link";
 
-import { Button } from "./ui/button";
-
-const OrderInorderationPage = ({ order }: { order: IOrder }) => {
-
+const OrderConfirmationPage = ({ order }: { order: IOrder }) => {
   return (
-    <main className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center py-4 px-2">
-      {/* Header */}
+    <main className="w-full min-h-screen bg-[#0B0C0F] text-white py-4 px-2 sm:px-6 flex flex-col items-center">
+      
+      {/* Logo + Title */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-4"
+        className="text-center mb-8"
       >
-        <div className="flex justify-center mb-1">
+        <div className="flex justify-center mb-3">
           <Image
-            width={80}
-            height={80}
-           src="htts://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
+            width={100}
+            height={100}
+            src="https://ik.imagekit.io/flparvez/1759429212787-WhatsApp_Image_2025-10-01_at_21.49.56_yjWVss_rM.jpeg"
             alt="Logo"
-            className="w-20 h-20 rounded-full shadow-lg"
+            className="rounded-full w-24 h-24 shadow-[0_0_30px_rgba(0,200,255,0.4)]"
           />
         </div>
-        <h1 className="text-2xl font-extrabold text-gray-900">
-          প্যাকেজটি নেয়ার জন্য ধন্যবাদ
+
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
+          আপনার অর্ডারটি সফলভাবে সম্পন্ন হয়েছে
         </h1>
-        <p className="text-red-600 mt-2 font-bold">
-        ২ - ৩ দিনের মধ্যে আপনার অর্ডারটি ডেলিভারি করা হবে ইনশাল্লাহ।
+        <p className="mt-3 text-red-400 text-lg font-semibold">
+          ২–৩ দিনের মধ্যে আপনার অর্ডারটি ডেলিভারি করা হবে ইনশাল্লাহ।
         </p>
-        <p className="mt-1 text-lg text-gray-700 font-semibold">
-          আপনার অর্ডারটি সফলভাবে সম্পন্ন হয়েছে।
-        </p>      <p className="mt-1 text-black  font-bold">
-          আনবক্সিং ভিডিও করবেন অবশ্যই এবং আমাদের ফেসবুক পেজে শেয়ার করুন।
+        <p className="mt-1 text-gray-300 text-lg">
+          আনবক্সিং ভিডিও করতে ভুলবেন না — আমাদের ফেসবুক পেজে শেয়ার করুন।
         </p>
+
+        <div className="mt-3 inline-block bg-[#1A1D22] text-blue-400 px-4 py-1 rounded-full text-sm border border-blue-700/40">
+          Order Status: {order.status}
+        </div>
       </motion.div>
 
-<Button variant="outline" className="mb-1">
-        Order: {order.status}
-      </Button>
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Billing Address */}
+      {/* Main Grid */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Billing */}
         <motion.div
-          initial={{ opacity: 0, x: -30 }}
+          initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden md:col-span-2"
+          className="md:col-span-2 bg-[#111317] rounded-2xl border border-gray-800 shadow-xl p-2"
         >
-          <div className="bg-blue-600 text-white px-4 py-2 font-semibold">
-            Billing Address
-          </div>
-          <div className="p-4 space-y-2 text-gray-900">
-            <p>
-              <span className="font-bold">Name:</span> {order.fullName}
-            </p>
-            <p>
-              <span className="font-bold">Phone:</span> {order.phone}
-            </p>
-            <p>
-              <span className="font-bold">Address:</span> {order.address}
-            </p>
+          <h2 className="text-xl font-semibold mb-4 text-blue-400"> Billing Address</h2>
+
+          <div className="space-y-2 text-gray-300 text-sm">
+            <p className="font-semibold"><span className="font-bold text-white">Name:</span> {order.fullName}</p>
+            <p className="font-semibold"><span className="font-bold text-white">Phone:</span> {order.phone}</p>
+            <p className="font-semibold"><span className="font-bold text-white">Address:</span> {order.address}</p>
           </div>
         </motion.div>
 
         {/* Summary */}
         <motion.div
-          initial={{ opacity: 0, x: 30 }}
+          initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-xl shadow-lg overflow-hidden"
+          className="bg-[#111317] rounded-2xl border border-gray-800 shadow-xl p-2"
         >
-          <div className="bg-orange-400 text-white px-4 py-2 font-semibold">
-            Summary
-          </div>
-          <div className="p-4 text-gray-800 space-y-2">
-            <p>
-              <span className="font-bold">Order no:</span> {order.orderId}
-            </p>
-            <p>
-              <span className="font-bold">Date & Time:</span>{" "}
+          <h2 className="text-xl font-semibold mb-4 text-purple-400">🧾 Summary</h2>
+
+          <div className="space-y-2 text-gray-300 text-sm">
+            <p><span className="font-bold text-white">Order No:</span> {order.orderId}</p>
+            <p className="font-semibold" >
+              <span className="font-bold text-white">Date:</span>{" "}
               {new Date(order.createdAt).toLocaleString()}
             </p>
-            <p>
-              <span className="font-bold">Total:</span> ৳{order.totalAmount}
-            </p> 
-             {
-              order?.paytorider && <p className="font-bold">
-              <span className="font-bold">Pay To Rider:</span> ৳{order.paytorider}
-            </p>
-             }
-            <p>
-              <span className="font-bold">Payment Type:</span>{" "}
-              {order.paymentType}
-            </p>
+            <p><span className="font-bold text-white">Total:</span> ৳{order.totalAmount}</p>
+
+            {order?.paytorider && (
+              <p className="font-bold text-orange-400 text-sm">
+                Pay To Rider: ৳{order.paytorider}
+              </p>
+            )}
+
+            <p><span className="font-bold text-white">Payment:</span> {order.paymentType}</p>
           </div>
         </motion.div>
       </div>
 
       {/* Order Items */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-5xl bg-white rounded-xl shadow-sm mt-8 overflow-hidden"
+        className="w-full max-w-6xl bg-[#111317] rounded-2xl border border-gray-800 shadow-xl mt-10 overflow-hidden"
       >
-        <div className="bg-green-600 text-white px-4   py-2 font-semibold">
-          Order Items
+        <div className="px-6 py-3 text-lg font-semibold bg-[#0F1A12] text-green-400 border-b border-green-700/40">
+          🛍 Order Items
         </div>
-        <div className="p-1 overflow-x-auto">
-          <table className="w-full border-collapse">
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-gray-300 text-sm">
             <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="px-4 py-2">Product</th>
-                <th className="px-4 py-2">Name</th>
-            
-                <th className="px-4 py-2">Subtotal</th>
+              <tr className="bg-[#1A1D22] text-gray-400">
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Details</th>
+                <th className="px-4 py-3">Price</th>
               </tr>
             </thead>
+
             <tbody>
               {order.items.map((item: IOrderItem, i: number) => (
-                <tr key={i} className="border-b">
-                  {/* image */}
-                  <td className="px-1 py-2">
+                <tr key={i} className="border-b border-gray-800">
+                  <td className="px-4 py-3">
                     <Image
-                      width={64}
-                      height={64}
+                      width={60}
+                      height={60}
                       src={item?.product?.images[0]?.url || ""}
-                      alt={item?.product?.name || "Product Image"}
-                      className="w-16 h-16 object-cover"
+                      className="w-14 h-14 rounded-lg object-cover border border-gray-700"
+                      alt={item.product?.name || "Product"}
                     />
                   </td>
-                  <td className=" sm:text-sm text-xs py-2 font-semibold">
-                    {
-                   item.selectedVariantOptions? `Size: ${item.selectedVariantOptions?.Size}` : null
-                   }
-                    <br />
-                     
-                   {
-                   item.selectedVariantOptions? `Color: ${item.selectedVariantOptions?.Color}` : null
-                   }
+
+                  <td className="px-4 py-3 text-sm">
+                    <p className="font-semibold text-gray-200">{item.product?.name}</p>
+                    {item.selectedVariantOptions?.Size && (
+                      <p className="text-xs text-gray-400">
+                        Size: {item.selectedVariantOptions.Size}
+                      </p>
+                    )}
+                    {item.selectedVariantOptions?.Color && (
+                      <p className="text-xs text-gray-400">
+                        Color: {item.selectedVariantOptions.Color}
+                      </p>
+                    )}
                   </td>
-                
-                  <td className="px-2 py-3 text-sm font-semibold text-gray-800">
+
+                  <td className="px-4 py-3 font-semibold text-white">
                     ৳{item.price} × {item.quantity}
                   </td>
                 </tr>
               ))}
+
               {/* Totals */}
               <tr>
-                <td colSpan={2} className="px-4 py-3 text-right font-bold">
+                <td colSpan={2} className="px-4 py-3 text-right font-bold text-gray-300">
                   Subtotal
                 </td>
-                <td className="px-4 py-3">৳{order.totalAmount-order.deliveryCharge}</td>
+                <td className="px-4 py-3 text-white">
+                  ৳{order.totalAmount - order.deliveryCharge}
+                </td>
               </tr>
               <tr>
-                <td colSpan={2} className="px-4 py-3 text-right font-bold">
-                  Shipping
+                <td colSpan={2} className="px-4 py-3 text-right font-bold text-gray-300">
+                  Delivery Charge
                 </td>
-                <td className="px-4 py-3 font-semibold">৳{order.deliveryCharge}</td>
+                <td className="px-4 py-3 text-white">৳{order.deliveryCharge}</td>
               </tr>
-              <tr className="bg-gray-100 font-bold">
+              <tr className="bg-[#1A1D22] font-extrabold text-white">
                 <td colSpan={2} className="px-4 py-3 text-right">
                   Total
                 </td>
-                <td className="px-4 py-3">৳{order.totalAmount}</td>
-              </tr>   
-              
-              
-                <tr className="bg-gray-100 font-bold">
-                <td colSpan={2} className="px-4 py-2 text-right">
-                 {
-              order?.paytorider && <p className="font-extrabold text-orange-600">
-              <span className="font-bold">Pay To Rider:        </span> ৳{order.paytorider}
-            </p>
-             }
-                </td>
-              
+                <td className="px-4 py-3 text-green-400">৳{order.totalAmount}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </motion.div>
 
-      {/* Actions */}
-      <div className="flex flex-col md:flex-row gap-4 mt-8 mb-10">
-        <Link href={"https://www.facebook.com/a1ladiesfr/"  } target="_blank" rel="noopener noreferrer"
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md"
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-12">
+        <Link
+          href="https://www.facebook.com/a1ladiesfr/"
+          target="_blank"
+          className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-700 hover:opacity-90 text-white shadow-lg shadow-green-800/30 font-semibold"
         >
           Continue Shopping
         </Link>
+
         <button
           onClick={() => generateInvoicePdf(order)}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md"
+          className="px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:opacity-90 text-white shadow-lg shadow-orange-800/30 font-semibold"
         >
           📄 Download Invoice
         </button>
@@ -202,4 +187,4 @@ const OrderInorderationPage = ({ order }: { order: IOrder }) => {
   );
 };
 
-export default OrderInorderationPage;
+export default OrderConfirmationPage;
