@@ -55,6 +55,7 @@ const router = useRouter();
 
     toast.success(`${product.name} added to cart!`);
     router.push("/cart");
+    
   };
 
   return { addProductToCart };

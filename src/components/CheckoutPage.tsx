@@ -170,7 +170,7 @@ const CheckoutPage = () => {
         };
 
         const userData = {
-          email_address: "",
+          email_address: "contact@romoni.xyz",
           phone_number: form.phone,
           first_name: firstName,
           last_name: lastName,
@@ -230,60 +230,6 @@ const CheckoutPage = () => {
 // 
 
 
-
-useEffect(() => {
-  if (typeof window === "undefined" || cart.length === 0) return;
-
-  const total = subtotal + deliveryCharge;
-
-  const userData = {
-    email_address: "",
-    phone_number: form.phone || "",
-    first_name: form.fullName?.split(" ")[0] || "",
-    last_name: form.fullName?.split(" ")[1] || "",
-    country: "Bangladesh",
-    city: form.city || "",
-    postal_code: "",
-    coupon: "",
-  };
-
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event: "begin_checkout",
-    ecommerce: {
-      value: total,
-      currency: "BDT",
-      items: cart.map((item) => ({
-        item_id: item.productId,
-        item_name: item.name,
-        item_category: "General",
-        price: item.price,
-        quantity: item.quantity,
-      })),
-      user_data: userData,
-    },
-  });
-
-  if (window.fbq) {
-    window.fbq("track", "InitiateCheckout", {
-      value: total,
-      currency: "BDT",
-      contents: cart.map((item) => ({
-        id: item.productId,
-        quantity: item.quantity,
-        item_price: item.price,
-      })),
-      content_type: "product",
-      user_data: {
-        ph: form.phone,
-        fn: userData.first_name,
-        ln: userData.last_name,
-        ct: userData.city,
-        country: "Bangladesh",
-      },
-    });
-  }
-}, [cart, subtotal, deliveryCharge, form]);
 
   /* ---------------- DARK UI ---------------- */
   return (
