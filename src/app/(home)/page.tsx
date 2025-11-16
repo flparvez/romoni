@@ -15,7 +15,7 @@ import { SITE_URL } from "@/hooks/serverApi";
 export default async function Homepage() {
   // ✅ Server fetch 
   const productRes = await fetch(`${SITE_URL}/api/products?&limit=18` ,{
-    cache: 'no-store', next: { revalidate: 600 }
+    cache: 'force-cache', next: { revalidate: 180 }
   });
   const categoryRes = await fetch(`${SITE_URL}/api/categories`,
     {

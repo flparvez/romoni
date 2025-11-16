@@ -117,17 +117,17 @@ useEffect(() => {
       )}
 
       {/* ✅ OPTIONAL VIDEO (if exists) */}
-      {product1?.video && (
+      {product1?.video? (
         <section className="py-10 px-4 max-w-4xl mx-auto">
           <div className="relative aspect-video rounded-2xl overflow-hidden shadow-xl">
             <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${product1.video}`} allowFullScreen />
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* ✅ SECTION 2 — TEXT ONLY SECTION (NO IMAGE) */}
       {section2 && (
-        <section className="py-16 px-4 max-w-5xl mx-auto text-center">
+        <section className="py-8 px-4 max-w-5xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6">{section2.title}</h2>
           <ul className="space-y-3 max-w-3xl mx-auto">
             {section2.bulletPoints.map((bp, i) => (
@@ -213,7 +213,7 @@ useEffect(() => {
       </section>
 
       {/* ✅ CHECKOUT */}
-      <div id="order-form" className="py-10 text-center">
+      <div id="order-form" className="py-4 text-center">
         <LandingCheckoutPage isDeliveryChargeFree={pageContent.isDeliveryChargeFree} products={products} />
       </div>
 

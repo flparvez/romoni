@@ -180,7 +180,7 @@ export default function LandingCheckoutPage({
   /* ----------------------------- UI ----------------------------- */
 
   return (
-    <div className="max-w-3xl mx-auto p-4 py-4 pb-12 bg-[#0B0B0D] text-white min-h-screen">
+    <div className="max-w-3xl mx-auto p-1 py-2 pb-12 bg-[#0B0B0D] text-white min-h-screen">
       <h1 className="text-center text-3xl font-extrabold mb-6">
         🛍 অর্ডার করুন
       </h1>
@@ -269,18 +269,7 @@ export default function LandingCheckoutPage({
         </button>
       </div>
 
-      <style>{`
-        .input-dark {
-          width: 100%;
-          background: #1A1A1E;
-          border: 1px solid #3a3a3f;
-          padding: 12px;
-          border-radius: 10px;
-          color: white;
-        }
-        .input-dark:focus { border-color: #3b82f6; }
-        .radio-dark { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ddd; }
-      `}</style>
+     
     </div>
   );
 }
