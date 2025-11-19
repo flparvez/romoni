@@ -178,119 +178,182 @@ export default function LandingCheckoutPage({
   }, []);
 
   /* ----------------------------- UI ----------------------------- */
-
-  return (
-    <div className="max-w-3xl mx-auto p-1 py-2 pb-12 bg-[#0B0B0D] text-white min-h-screen">
-      <h1 className="text-center text-3xl font-extrabold mb-6">
-        🛍 অর্ডার করুন
+/* ----------------------------- UI ----------------------------- */
+return (
+  <div className="w-full max-w-2xl mx-auto bg-[#0B0B0D] text-white min-h-screen font-sans">
+    
+    {/* 🏷️ Header */}
+    <div className="bg-[#141416] p-4 border-b border-gray-800 sticky top-0 z-10 shadow-xl">
+      <h1 className="text-center text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+         অর্ডার কনফার্ম করুন
       </h1>
+    </div>
 
-      {/* Product Selection */}
-      {products.length > 1 && (
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          {products.map((p) => (
-            <button
-              key={p._id}
-              onClick={() => setSelectedProduct(p)}
-              className={`p-4 rounded-xl border transition hover:shadow-md ${
-                selectedProduct._id === p._id
-                  ? "border-blue-500 bg-blue-800/30"
-                  : "border-gray-700 bg-[#1A1A1E]"
-              }`}
-            >
-              <img
-                src={p.images?.[0]?.url}
-                className="w-20 h-20 mx-auto rounded-lg object-cover"
-              />
-              <p className="mt-2 text-sm font-medium">{p.name}</p>
-              <p className="font-bold text-green-400">৳{p.price}</p>
-            </button>
-          ))}
-        </div>
+    <div className="p-1 md:p-6 pb-2 space-y-8">
+
+      {/* 📦 Product Selection (If multiple) */}
+      {products.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">প্রোডাক্ট সিলেক্ট করুন</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {products.map((p) => (
+              <div
+                key={p._id}
+                onClick={() => setSelectedProduct(p)}
+                className={`relative cursor-pointer p-3 rounded-2xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                  selectedProduct._id === p._id
+                    ? "border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                    : "border-gray-800 bg-[#18181b] hover:border-gray-600"
+                }`}
+              >
+                {/* Radio Indicator */}
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                   selectedProduct._id === p._id ? "border-blue-500 bg-blue-500" : "border-gray-500"
+                }`}>
+                  {selectedProduct._id === p._id && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+
+                <img
+                  src={p.images?.[0]?.url}
+                  alt={p.name}
+                  className="w-14 h-14 rounded-lg object-cover border border-gray-700"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-200 line-clamp-1">{p.name}</p>
+                  <p className="text-blue-400 font-bold">৳{p.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Form */}
-      <div className="space-y-4 bg-[#111215] p-5 rounded-xl border border-gray-700 shadow-sm">
-        <input
-          name="fullName"
-          onChange={handleChange}
-          className="input-dark"
-          placeholder="আপনার নাম *"
-        />
-        <input
-          name="phone"
-          onChange={handleChange}
-          className="input-dark"
-          placeholder="মোবাইল নাম্বার *"
-        />
-        <textarea
-          name="address"
-          onChange={handleChange}
-          className="input-dark h-20"
-          placeholder="ডেলিভারি ঠিকানা *"
-        ></textarea>
+      {/* 📝 Customer Form */}
+      <section className="space-y-5">
+        <h2 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">আপনার তথ্য দিন</h2>
+        
+        {/* Name Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">আপনার নাম <span className="text-red-500">*</span></label>
+          <input
+            name="fullName"
+            onChange={handleChange}
+            type="text"
+            placeholder="সম্পূর্ণ নামটি লিখুন"
+            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          />
+        </div>
 
-        {!isDeliveryChargeFree && (
-          <div>
-            <label className="font-medium">🚚 ডেলিভারি</label>
-            <div className="flex gap-4 mt-2 text-sm">
-              <label className="radio-dark">
-                <input
-                  type="radio"
+        {/* Phone Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">মোবাইল নাম্বার <span className="text-red-500">*</span></label>
+          <input
+            name="phone"
+            onChange={handleChange}
+            type="tel"
+            placeholder="01XXXXXXXXX"
+            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          />
+        </div>
+
+        {/* Address Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">সম্পূর্ণ ঠিকানা <span className="text-red-500">*</span></label>
+          <textarea
+            name="address"
+            onChange={handleChange}
+            rows={3}
+            placeholder="বাসা নং, রোড নং, এলাকা..."
+            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+          ></textarea>
+        </div>
+      </section>
+
+      {/* 🚚 Delivery Options */}
+      <section>
+        <h2 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">ডেলিভারি মেথড</h2>
+        
+        {isDeliveryChargeFree ? (
+          <div className="p-2 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-3 text-green-400">
+             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+             <span className="font-bold">ফ্রি ডেলিভারি অফারটি আপনার জন্য প্রযোজ্য! </span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Inside Dhaka */}
+            <label className={`cursor-pointer p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
+              deliveryType === "insideDhaka" 
+                ? "border-blue-500 bg-blue-500/10" 
+                : "border-gray-700 bg-[#18181b] hover:border-gray-600"
+            }`}>
+              <div className="flex items-center gap-3">
+                <input 
+                  type="radio" 
+                  name="delivery" 
                   checked={deliveryType === "insideDhaka"}
                   onChange={() => setDeliveryType("insideDhaka")}
+                  className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
                 />
-                ঢাকার ভিতরে (৳60)
-              </label>
-              <label className="radio-dark">
-                <input
-                  type="radio"
+                <span className="font-medium">ঢাকার ভিতরে</span>
+              </div>
+              <span className="font-bold text-white">৳60</span>
+            </label>
+
+            {/* Outside Dhaka */}
+            <label className={`cursor-pointer p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
+              deliveryType === "outsideDhaka" 
+                ? "border-blue-500 bg-blue-500/10" 
+                : "border-gray-700 bg-[#18181b] hover:border-gray-600"
+            }`}>
+              <div className="flex items-center gap-3">
+                <input 
+                  type="radio" 
+                  name="delivery" 
                   checked={deliveryType === "outsideDhaka"}
                   onChange={() => setDeliveryType("outsideDhaka")}
+                  className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
                 />
-                ঢাকার বাইরে (৳120)
-              </label>
-            </div>
+                <span className="font-medium">ঢাকার বাইরে</span>
+              </div>
+              <span className="font-bold text-white">৳120</span>
+            </label>
           </div>
         )}
+      </section>
 
-        {isDeliveryChargeFree && (
-          <p className="text-green-400 font-semibold">🚚 ফ্রি ডেলিভারি ✅</p>
-        )}
+      {/* 🧾 Payment Breakdown (Optional but good for UX) */}
+      <div className="bg-[#18181b] p-5 rounded-xl space-y-3 border border-gray-800">
+        <div className="flex justify-between text-gray-400">
+          <span>সাবটোটাল</span>
+          <span>৳{selectedProduct?.price}</span>
+        </div>
+        <div className="flex justify-between text-gray-400">
+          <span>ডেলিভারি চার্জ</span>
+          <span>{isDeliveryChargeFree ? "ফ্রি" : `৳${deliveryType === "insideDhaka" ? 60 : 120}`}</span>
+        </div>
+        <div className="h-[1px] bg-gray-700 my-2"></div>
+        <div className="flex justify-between text-xl font-bold text-white">
+          <span>সর্বমোট</span>
+          <span className="text-blue-400">৳{total}</span>
+        </div>
       </div>
 
-      {/* Submit */}
-      <div className="bg-[#111215] border-t border-gray-800 p-4 shadow-lg">
+    </div>
+
+    {/* ✅ Sticky Bottom Action Bar */}
+    <div className=" p-4 bg-[#0B0B0D]/90 backdrop-blur-md border-t border-gray-800 z-50">
+      <div className="max-w-2xl mx-auto">
         <button
           onClick={handleSubmit}
-          className="w-full py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-blue-600 to-purple-600"
+          className="w-full group relative py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all active:scale-[0.98]"
         >
-          ✅ অর্ডার কনফার্ম করুন (৳{total})
+          <span className="flex items-center justify-center gap-2">
+            অর্ডার কনফার্ম করুন - ৳{total} 
+            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </span>
         </button>
       </div>
-
-     <style>{`
-        .input-dark {
-          width: 100%;
-          background: #1A1A1E;
-          border: 1px solid #3a3a3f;
-          padding: 12px;
-          border-radius: 10px;
-          color: white;
-          outline: none;
-        }
-        .input-dark:focus {
-          border-color: #3b82f6;
-        }
-        .radio-dark {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          color: #ddd;
-        }
-      `}</style>
     </div>
-    
-  );
+  </div>
+);
 }

@@ -190,7 +190,7 @@ export default function RootLayout({
           <ImageKitProvider urlEndpoint={urlEndpoint}>
             <Navbar />
             <main>{children}</main>
-            <BottomBar />
+            
           </ImageKitProvider>
           <Toaster />
         </Providers>
