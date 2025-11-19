@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -6,29 +6,31 @@ import Link from "next/link";
 import Footer from "@/components/Footer";
 import ProductDetailPage from "@/components/products/ProductDetailPage";
 import { SITE_URL } from "@/hooks/serverApi";
-import { IProduct, IProductImage } from "@/types";
+import { IProduct } from "@/types";
 
-type Props = { params: { slug: string } };
+// ⚡ Update for Next.js 15/16: Params must be a Promise
+type Props = {
+  params: Promise<{ slug: string }>;
+};
 
 export const dynamicParams = true;
 
 /* ----------------------------------------------------------
- ⚡ generateStaticParams → FAST & LIGHT
- Only fetch slugs (not full products) to avoid 2MB cache limits
+ ⚡ GENERATE STATIC PARAMS (Optimized)
 ----------------------------------------------------------- */
 export async function generateStaticParams() {
   try {
-    const res = await fetch(`${SITE_URL}/api/products?fields=slug`, {
-      cache: "force-cache",
+    // Fetch only slugs using the optimized API
+    const res = await fetch(`${SITE_URL}/api/products?fields=slug&limit=60`, {
+      next: { revalidate: 3600 }, // Revalidate list every hour
     });
 
     const json = await res.json();
     if (!json?.products) return [];
 
-    return json.products.slice(0, 100).map((p: { slug: string }) => ({
+    return json.products.map((p: { slug: string }) => ({
       slug: p.slug,
     }));
-
   } catch (error) {
     console.error("Error generating static params:", error);
     return [];
@@ -36,13 +38,14 @@ export async function generateStaticParams() {
 }
 
 /* ----------------------------------------------------------
- ⚡ Fetch product with always-fresh data
+ ⚡ FETCH PRODUCT (Centralized Logic)
 ----------------------------------------------------------- */
 async function getProduct(slug: string): Promise<IProduct | null> {
   try {
     const res = await fetch(`${SITE_URL}/api/products/slug/${slug}`, {
-      cache: "force-cache",            // 👈 always fresh product data
-      next: { revalidate: 60 },     // 👈 revalidate per minute for speed
+      // 'force-cache' and 'revalidate' can conflict.
+      // Using revalidate implies ISR (Incremental Static Regeneration).
+      next: { revalidate: 60 }, 
     });
 
     if (!res.ok) return null;
@@ -55,35 +58,38 @@ async function getProduct(slug: string): Promise<IProduct | null> {
 }
 
 /* ----------------------------------------------------------
- ⚡ SEO Metadata — Fully Optimized
+ ⚡ SEO METADATA
 ----------------------------------------------------------- */
-export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // ⚡ Await params first
   const { slug } = await params;
   const product = await getProduct(slug);
 
   if (!product) {
     return {
-      title: "Product Not Found",
-      description: "This product is unavailable.",
+      title: "Product Not Found | A1 Romoni",
+      description: "This product is currently unavailable.",
       robots: { index: false, follow: false },
     };
   }
 
   const images = product.images?.map((i) => i.url) || [];
   const description = (product.seoDescription || product.name).slice(0, 160);
+  const productUrl = `https://uniquestorebd.store/product/${product.slug}`;
 
   return {
     title: `${product.name} Price in Bangladesh`,
     description,
     alternates: {
-      canonical: `https://a1romoni.xyz/product/${product.slug}`,
+      canonical: productUrl,
     },
     openGraph: {
       title: product.name,
       description,
-      url: `https://a1romoni.xyz/product/${product.slug}`,
+      url: productUrl,
       images,
       siteName: "A1 Romoni",
+      locale: "en_US",
       type: "website",
     },
     twitter: {
@@ -93,19 +99,19 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
       images: images[0],
     },
   };
-};
+}
 
 /* ----------------------------------------------------------
- ⚡ PAGE — Always Fresh, Super Fast
+ ⚡ MAIN PAGE COMPONENT
 ----------------------------------------------------------- */
 export default async function ProductDetailsPage({ params }: Props) {
+  // ⚡ Await params first (Critical for Next.js 15+)
   const { slug } = await params;
 
-  // Always fresh product
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  // JSON-LD schema
+  // JSON-LD Schema for Google Rich Snippets
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -118,7 +124,7 @@ export default async function ProductDetailsPage({ params }: Props) {
       "@type": "Offer",
       priceCurrency: "BDT",
       price: product.price,
-      url: `https://a1romoni.xyz/product/${product.slug}`,
+      url: `https://uniquestorebd.store/product/${product.slug}`,
       availability:
         product.stock > 0
           ? "https://schema.org/InStock"
@@ -128,17 +134,18 @@ export default async function ProductDetailsPage({ params }: Props) {
 
   return (
     <main>
+      {/* SEO Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       <div className="mx-auto px-0 sm:px-6 lg:px-8 py-1">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="py-1 text-sm">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="py-1 text-sm mb-4">
           <ol className="flex items-center space-x-2 text-gray-500">
             <li>
-              <Link href="/" className="hover:text-blue-600 hover:underline">
+              <Link href="/" className="hover:text-blue-600 hover:underline transition-colors">
                 Home
               </Link>
             </li>
@@ -149,7 +156,7 @@ export default async function ProductDetailsPage({ params }: Props) {
                 <li>
                   <Link
                     href={`/category/${product.category.slug}`}
-                    className="hover:text-blue-600 hover:underline"
+                    className="hover:text-blue-600 hover:underline transition-colors"
                   >
                     {product.category.name}
                   </Link>
@@ -158,13 +165,13 @@ export default async function ProductDetailsPage({ params }: Props) {
             )}
 
             <li>/</li>
-            <li className="font-semibold text-gray-700 max-w-[180px] truncate">
+            <li className="font-semibold text-gray-700 max-w-[200px] truncate">
               {product.name}
             </li>
           </ol>
         </nav>
 
-        {/* Product Details Component */}
+        {/* Product Details Section */}
         <ProductDetailPage product={product} />
       </div>
 

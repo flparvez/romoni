@@ -128,7 +128,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ Allproducts }) => {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
-              className="mt-3 text-4xl font-extrabold leading-tight text-gray-900 md:text-5xl"
+              className="mt-3 text-2xl sm:text-4xl font-extrabold leading-tight text-gray-900 md:text-5xl"
             >
               Discover the Future of{" "}
               <span className="relative inline-block bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">

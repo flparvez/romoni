@@ -82,18 +82,21 @@ export async function POST(req: NextRequest) {
 // ==========================
 // GET → Fetch Paginated Products (Supports slug or category id)
 // =============================================================
+// GET → Fetch Paginated Products (Supports slug or category id)
+
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
     const { searchParams } = new URL(req.url);
 
-    const rawPage = searchParams.get("page"); // <-- important
+    const rawPage = searchParams.get("page");
     const page = Number(rawPage) || 1;
     const limit = Number(searchParams.get("limit")) || 20;
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category");
     const isActive = searchParams.get("isActive");
+    const fields = searchParams.get("fields"); // 👈 New: Handle field selection
 
     const skip = (page - 1) * limit;
 
@@ -109,7 +112,7 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    /** 🟦 CATEGORY FILTER (Slug OR ObjectId) */
+    /** 🟦 CATEGORY FILTER */
     if (category) {
       const isMongoId = /^[a-f\d]{24}$/i.test(category);
       if (isMongoId) {
@@ -123,37 +126,36 @@ export async function GET(req: NextRequest) {
     if (isActive !== null) {
       query.isActive = isActive === "true";
     }
-/** ------------------------------------------------
- * 🟧 Determine sort order 
- * ------------------------------------------------*/
-let sortOption: any = { createdAt: -1 }; // default sort
 
-const hasFilters =
-  (search && search.trim() !== "") ||
-  (category && category.trim() !== "") ||
-  page !== 1 ||
-  isActive !== null;
+    /** 🟧 Determine sort order */
+    let sortOption: any = { createdAt: -1 };
 
-// ✔ If NO filters + limit=18 → prioritize lastUpdatedIndex
-if (limit === 18) {
-  sortOption = { lastUpdatedIndex: -1 };
-}
+    // Prioritize lastUpdatedIndex for specific limits (homepage logic)
+    if (limit === 18 || limit === 100) {
+      sortOption = { lastUpdatedIndex: -1 };
+    }
 
+    /** ⚡ FIELD SELECTION (Optimization) */
+    // If 'fields' param exists (e.g., "slug,name"), select only those fields
+    let selectFields = "";
+    if (fields) {
+      selectFields = fields.split(",").join(" ");
+    }
 
     /** 🟦 Fetch paginated products */
-    const [products, totalCount] = await Promise.all([
-      Product.find(query)
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+    const productsQuery = Product.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .select(selectFields) // 👈 Apply selection
+      .lean();
 
+    const [products, totalCount] = await Promise.all([
+      productsQuery,
       Product.countDocuments(query),
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
-
-  
 
     return NextResponse.json(
       {
@@ -162,7 +164,6 @@ if (limit === 18) {
         currentPage: page,
         totalPages,
         totalCount,
-       
       },
       { status: 200 }
     );

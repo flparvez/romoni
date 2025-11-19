@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props) {
   const name = category.name || slug.replace(/-/g, " ");
 
   return {
-    title: `${name} Price in Bangladesh 2025 | A1 Romoni`,
+    title: `${name} Price in Bangladesh `,
     description: `Buy the best ${name} products online in Bangladesh from A1 Romoni.`,
     openGraph: {
       title: name,
@@ -94,7 +94,7 @@ export default async function ProductByCategory({ params, searchParams }: Props)
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-1 py-4 px-2 md:px-8 lg:px-12">
+      <main className="flex-1 py-4 px-0 md:px-8 lg:px-12">
 
         {/* Title */}
         <div className="mb-5 text-center">
