@@ -20,17 +20,17 @@ export interface IProductImage {
   altText?: string;
 }
 
-export interface IVariantOption {
-  value: string;
-  price?: number;
-  stock?: number;
-  sku?: string;
-}
+  export interface IVariantOption {
+    value: string;
+    price?: number;
+    stock?: number;
+    sku?: string;
+  }
 
-export interface IVariant {
-  name: string;
-  options: IVariantOption[];
-}
+  export interface IVariant {
+    name: string;
+    options: IVariantOption[];
+  }
 
 export interface IAttribute {
   key: string;

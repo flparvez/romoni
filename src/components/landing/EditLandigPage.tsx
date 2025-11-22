@@ -38,7 +38,7 @@ interface ILandingData {
   faqTitle: string;
   faqData: IFAQ[];
   footerText: string;
-  products: string[];
+  products: IProduct[];
   theme?: {
     primary?: string;
     secondary?: string;
@@ -222,25 +222,41 @@ setSelectedProducts(normalizedProductIds);
     return `linear-gradient(135deg, ${p} 0%, ${s} 100%)`;
   }, [data?.theme?.primary, data?.theme?.secondary]);
 
-  const handleSubmit = async () => {
-    if (!data) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/landing/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, products: selectedProducts }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to save");
-      toast.success("Saved successfully");
-      router.refresh();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
+
+
+const handleSubmit = async () => {
+  if (!data) return;
+  setLoading(true);
+
+  try {
+    // ⭐ Pull full product object instead of only ID
+    const fullProducts = selectedProducts
+      .map((id) => products.find((p) => p._id === id))
+      .filter(Boolean);
+
+    const res = await fetch(`/api/landing/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...data,
+        products: fullProducts, // ← FULL PRODUCT MODELS
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Failed to save");
+
+    toast.success("Saved successfully");
+    router.refresh();
+  } catch (err: any) {
+    toast.error(err.message || "Update failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading || !data) return <div className="p-8 text-center">Loading...</div>;
 

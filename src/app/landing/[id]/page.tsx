@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: IdParams) {
 
   try {
     const res = await fetch(`${SITE_URL}/api/landing/${id}`, {
-      cache: "no-store", // always fresh SEO metadata
+      cache: "force-cache", // always fresh SEO metadata
     });
 
     if (!res.ok) {
@@ -76,7 +76,7 @@ export default async function LandingPage({ params }: IdParams) {
   try {
     const res = await fetch(`${SITE_URL}/api/landing/${id}`, {
       cache: "force-cache", // always fresh content
-      next: { revalidate: 180 }, // optional revalidation (ISR-like)
+      next: { revalidate: 60 }, // revalidate every 60 seconds
     });
 
     if (!res.ok) {

@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { IProduct } from "@/types";
 
-/* ----------------------------- DATALAYER HELPERS ----------------------------- */
-
+/* ------------------ Tracking Helpers ------------------ */
 const pushDL = (event: any) => {
   if (typeof window !== "undefined") {
     window.dataLayer = window.dataLayer || [];
@@ -22,7 +21,7 @@ const fbTrack = (event: string, data: any) => {
   }
 };
 
-/* ----------------------------------------------------------------------------- */
+/* -------------------------------------------------------- */
 
 interface Props {
   products: IProduct[];
@@ -33,33 +32,56 @@ const deliveryCharges = { dhaka: 60, outsideDhaka: 120 };
 
 export default function LandingCheckoutPage({
   products,
-  isDeliveryChargeFree = false,
+  isDeliveryChargeFree,
 }: Props) {
-
   const router = useRouter();
   const { cart, clearCart } = useCart();
   const { addProductToCart } = LandingAddToCart();
 
+  /* ------------------ SELECTED PRODUCT ------------------ */
   const [selectedProduct, setSelectedProduct] = useState<IProduct>(products[0]);
+
+  /* ------------------ SELECTED VARIANTS ------------------ */
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+
+  /* ------------------ SET DEFAULT VARIANTS ------------------ */
+  const loadDefaultVariants = (product: IProduct) => {
+    if (!product?.variants || product.variants.length === 0) return {};
+
+    const defaults: Record<string, string> = {};
+
+    product.variants.forEach((v) => {
+      if (v.options && v.options.length > 0) {
+        defaults[v.name] = v.options[0].value; // first option = default
+      }
+    });
+
+    return defaults;
+  };
+
+  /* ---------------- RESET CART when product changes ---------------- */
+  useEffect(() => {
+    const defaults = loadDefaultVariants(selectedProduct);
+
+    setSelectedVariants(defaults);
+
+    clearCart();
+    addProductToCart(selectedProduct, 1, defaults);
+  }, [selectedProduct]);
+
+  /* ---------------- DELIVERY CHARGES ---------------- */
   const [deliveryType, setDeliveryType] =
     useState<"insideDhaka" | "outsideDhaka">("insideDhaka");
 
-  /* ---------------- DELIVERY CHARGE ---------------- */
   const deliveryCharge = isDeliveryChargeFree
     ? 0
     : deliveryType === "insideDhaka"
     ? deliveryCharges.dhaka
     : deliveryCharges.outsideDhaka;
 
-  /* ---------------- RESET CART FOR SELECTED PRODUCT ---------------- */
-  useEffect(() => {
-    clearCart();
-    addProductToCart(selectedProduct, 1);
-  }, [selectedProduct]);
-
   /* ---------------- TOTAL CALC ---------------- */
   const subtotal = useMemo(
-    () => cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cart]
   );
 
@@ -90,62 +112,58 @@ export default function LandingCheckoutPage({
           paymentType: "COD",
           trxId: "",
           deliveryCharge,
-          paytorider: total, // COD full
+          paytorider: total,
           cartTotal: subtotal,
-          cartItems: cart.map((item) => ({
-            productId: item.productId,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.image,
-          })),
+          cartItems: cart,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Order failed");
+      if (!res.ok) throw new Error(data.error);
+      /* -------- PURCHASE EVENTS (RUN ONLY ONCE) -------- */
 
-      /* ---------------- BUILD PURCHASE ITEMS ---------------- */
-      const items = cart.map((i) => ({
-        item_id: i.productId,
-        item_name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-      }));
+        const firstName = form.fullName.split(" ")[0] || "";
+        const lastName = form.fullName.split(" ")[1] || "";
 
-      /* --------------------------- PURCHASE EVENT --------------------------- */
+      
 
-      pushDL({
-        event: "purchase",
-        ecommerce: {
-          value: data.order.totalAmount,
-          currency: "BDT",
-          transaction_id: data.order._id,
-          shipping: data.order.deliveryCharge,
-          tax: 0,
-          items,
-          user_data: {
-            phone_number: data.order.phone,
-            full_name: data.order.fullName,
-            address: data.order.address,
+        const userData = {
+          email_address: "contact@romoni.xyz",
+          phone_number: form.phone,
+          first_name: firstName,
+          last_name: lastName,
+          country: "Bangladesh",
+          city: form.city || "",
+          postal_code: "",
+        };
+
+        const items = cart.map((item) => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        }));
+
+        // GA4 PURCHASE
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "purchase",
+          ecommerce: {
+            transaction_id: data.order._id,
+            value: data.order.totalAmount,
+            currency: "BDT",
+            shipping: data.order.deliveryCharge,
+            tax: 0,
+            items,
+            user_data: userData, // <-- userData added
           },
-        },
-      });
+        });
 
-      fbTrack("Purchase", {
-        value: data.order.totalAmount,
-        currency: "BDT",
-        contents: items,
-        content_type: "product",
-      });
-
-      /* --------------------------------------------------------------------- */
-
-      toast.success("✅ অর্ডার সফল হয়েছে!");
+      toast.success("অর্ডার সফল হয়েছে!");
       clearCart();
       router.push(`/thank-you/${data.order._id}`);
-    } catch (err: any) {
-      toast.error("⚠ অর্ডার ব্যর্থ হয়েছে");
+    } catch {
+      toast.error("অর্ডার ব্যর্থ হয়েছে");
     }
   };
 
@@ -177,183 +195,220 @@ export default function LandingCheckoutPage({
     });
   }, []);
 
-  /* ----------------------------- UI ----------------------------- */
-/* ----------------------------- UI ----------------------------- */
-return (
-  <div className="w-full max-w-2xl mx-auto bg-[#0B0B0D] text-white min-h-screen font-sans">
-    
-    {/* 🏷️ Header */}
-    <div className="bg-[#141416] p-4 border-b border-gray-800 sticky top-0 z-10 shadow-xl">
-      <h1 className="text-center text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-         অর্ডার কনফার্ম করুন
-      </h1>
-    </div>
+  /* -------------------- UI -------------------- */
 
-    <div className="p-1 md:p-6 pb-2 space-y-8">
+  return (
+ <div className="w-full max-w-2xl mx-auto bg-[#0B0B0D] text-white min-h-screen">
 
-      {/* 📦 Product Selection (If multiple) */}
-      {products.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">প্রোডাক্ট সিলেক্ট করুন</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {products.map((p) => (
-              <div
-                key={p._id}
-                onClick={() => setSelectedProduct(p)}
-                className={`relative cursor-pointer p-3 rounded-2xl border-2 transition-all duration-200 flex items-center gap-4 ${
-                  selectedProduct._id === p._id
-                    ? "border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                    : "border-gray-800 bg-[#18181b] hover:border-gray-600"
-                }`}
-              >
-                {/* Radio Indicator */}
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                   selectedProduct._id === p._id ? "border-blue-500 bg-blue-500" : "border-gray-500"
-                }`}>
-                  {selectedProduct._id === p._id && <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
+  {/* Header */}
+  <div className="p-3 bg-[#141416] border-b border-gray-800 text-center fixed w-full max-w-2xl top-0 z-20">
+    <h1 className="text-xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text">
+      অর্ডার কনফার্ম করুন
+    </h1>
+  </div>
 
-                <img
-                  src={p.images?.[0]?.url}
-                  alt={p.name}
-                  className="w-14 h-14 rounded-lg object-cover border border-gray-700"
-                />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-200 line-clamp-1">{p.name}</p>
-                  <p className="text-blue-400 font-bold">৳{p.price}</p>
-                </div>
-              </div>
-            ))}
+  <div className="pt-12 pb-12 px-2 space-y-6">
+
+    {/* PRODUCT SELECTION */}
+    <section>
+      <h2 className="text-xs text-gray-400 mb-2 uppercase tracking-wide">প্রোডাক্ট সিলেক্ট করুন</h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {products.map((p) => (
+          <div
+            key={p._id}
+            onClick={() => setSelectedProduct(p)}
+            className={`p-2.5 rounded-xl cursor-pointer border flex gap-3 items-center transition-all ${
+              selectedProduct._id === p._id
+                ? "border-blue-500 bg-blue-500/10 shadow-[0_0_12px_rgba(59,130,246,0.25)]"
+                : "border-gray-700 bg-[#18181b] hover:border-gray-500 hover:bg-[#1d1d1f]"
+            }`}
+          >
+            <img
+              src={p.images?.[0]?.url}
+              className="w-12 h-12 rounded-lg object-cover"
+            />
+            <div>
+              <p className="text-sm font-medium">{p.name}</p>
+              <p className="text-blue-400 font-bold text-xs">৳{p.price}</p>
+            </div>
           </div>
-        </section>
-      )}
-
-      {/* 📝 Customer Form */}
-      <section className="space-y-5">
-        <h2 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">আপনার তথ্য দিন</h2>
-        
-        {/* Name Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">আপনার নাম <span className="text-red-500">*</span></label>
-          <input
-            name="fullName"
-            onChange={handleChange}
-            type="text"
-            placeholder="সম্পূর্ণ নামটি লিখুন"
-            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-          />
-        </div>
-
-        {/* Phone Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">মোবাইল নাম্বার <span className="text-red-500">*</span></label>
-          <input
-            name="phone"
-            onChange={handleChange}
-            type="tel"
-            placeholder="01XXXXXXXXX"
-            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-          />
-        </div>
-
-        {/* Address Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">সম্পূর্ণ ঠিকানা <span className="text-red-500">*</span></label>
-          <textarea
-            name="address"
-            onChange={handleChange}
-            rows={3}
-            placeholder="বাসা নং, রোড নং, এলাকা..."
-            className="w-full bg-[#18181b] border border-gray-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
-          ></textarea>
-        </div>
-      </section>
-
-      {/* 🚚 Delivery Options */}
-      <section>
-        <h2 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">ডেলিভারি মেথড</h2>
-        
-        {isDeliveryChargeFree ? (
-          <div className="p-2 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-3 text-green-400">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-             <span className="font-bold">ফ্রি ডেলিভারি অফারটি আপনার জন্য প্রযোজ্য! </span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Inside Dhaka */}
-            <label className={`cursor-pointer p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
-              deliveryType === "insideDhaka" 
-                ? "border-blue-500 bg-blue-500/10" 
-                : "border-gray-700 bg-[#18181b] hover:border-gray-600"
-            }`}>
-              <div className="flex items-center gap-3">
-                <input 
-                  type="radio" 
-                  name="delivery" 
-                  checked={deliveryType === "insideDhaka"}
-                  onChange={() => setDeliveryType("insideDhaka")}
-                  className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                />
-                <span className="font-medium">ঢাকার ভিতরে</span>
-              </div>
-              <span className="font-bold text-white">৳60</span>
-            </label>
-
-            {/* Outside Dhaka */}
-            <label className={`cursor-pointer p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
-              deliveryType === "outsideDhaka" 
-                ? "border-blue-500 bg-blue-500/10" 
-                : "border-gray-700 bg-[#18181b] hover:border-gray-600"
-            }`}>
-              <div className="flex items-center gap-3">
-                <input 
-                  type="radio" 
-                  name="delivery" 
-                  checked={deliveryType === "outsideDhaka"}
-                  onChange={() => setDeliveryType("outsideDhaka")}
-                  className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                />
-                <span className="font-medium">ঢাকার বাইরে</span>
-              </div>
-              <span className="font-bold text-white">৳120</span>
-            </label>
-          </div>
-        )}
-      </section>
-
-      {/* 🧾 Payment Breakdown (Optional but good for UX) */}
-      <div className="bg-[#18181b] p-5 rounded-xl space-y-3 border border-gray-800">
-        <div className="flex justify-between text-gray-400">
-          <span>সাবটোটাল</span>
-          <span>৳{selectedProduct?.price}</span>
-        </div>
-        <div className="flex justify-between text-gray-400">
-          <span>ডেলিভারি চার্জ</span>
-          <span>{isDeliveryChargeFree ? "ফ্রি" : `৳${deliveryType === "insideDhaka" ? 60 : 120}`}</span>
-        </div>
-        <div className="h-[1px] bg-gray-700 my-2"></div>
-        <div className="flex justify-between text-xl font-bold text-white">
-          <span>সর্বমোট</span>
-          <span className="text-blue-400">৳{total}</span>
-        </div>
+        ))}
       </div>
 
-    </div>
+      {/* VARIANTS */}
+      {selectedProduct?.variants && (
+        <div className="space-y-4 mt-5">
+          <h2 className="text-xs text-gray-400 uppercase">ভ্যারিয়েন্ট নির্বাচন করুন</h2>
 
-    {/* ✅ Sticky Bottom Action Bar */}
-    <div className=" p-4 bg-[#0B0B0D]/90 backdrop-blur-md border-t border-gray-800 z-50">
-      <div className="max-w-2xl mx-auto">
-        <button
-          onClick={handleSubmit}
-          className="w-full group relative py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all active:scale-[0.98]"
-        >
-          <span className="flex items-center justify-center gap-2">
-            অর্ডার কনফার্ম করুন - ৳{total} 
-            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-          </span>
-        </button>
+          {selectedProduct.variants.map((variant) => (
+            <div key={variant.name}>
+              <p className="mb-2 text-gray-300 text-sm font-medium">{variant.name}</p>
+
+              <div className="flex flex-wrap gap-2">
+                {variant.options.map((op) => {
+                  const isActive = selectedVariants[variant.name] === op.value;
+
+                  return (
+                    <button
+                      key={op.value}
+                      onClick={() => {
+                        const updated = {
+                          ...selectedVariants,
+                          [variant.name]: op.value,
+                        };
+                        setSelectedVariants(updated);
+
+                        clearCart();
+                        addProductToCart(selectedProduct, 1, updated);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg border text-xs transition-all ${
+                        isActive
+                          ? "border-blue-600 bg-blue-600/20 text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.25)]"
+                          : "border-gray-600 bg-[#1c1c1e] text-gray-300 hover:border-gray-400"
+                      }`}
+                    >
+                      {op.value}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    {/* FORM */}
+    <section className="space-y-4">
+      <div>
+        <label className="text-sm text-gray-300">আপনার নাম *</label>
+        <input
+          name="fullName"
+          onChange={handleChange}
+          className="w-full p-2.5 rounded-lg bg-[#18181b] border border-gray-700 text-white text-sm"
+          placeholder="নাম লিখুন"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm text-gray-300">মোবাইল নাম্বার *</label>
+        <input
+          name="phone"
+          onChange={handleChange}
+          className="w-full p-2.5 rounded-lg bg-[#18181b] border border-gray-700 text-white text-sm"
+          placeholder="01XXXXXXXXX"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm text-gray-300">ঠিকানা *</label>
+        <textarea
+          name="address"
+          rows={2}
+          onChange={handleChange}
+          className="w-full p-2.5 rounded-lg bg-[#18181b] border border-gray-700 text-white text-sm"
+          placeholder="বাড়ি, রোড, এলাকা..."
+        ></textarea>
+      </div>
+    </section>
+
+    {/* DELIVERY */}
+    {
+      isDeliveryChargeFree ? (
+   <section>
+      <h2 className="text-xs text-gray-400 mb-2 uppercase tracking-wide">ডেলিভারি মেথড</h2>
+
+      <div className="p-2.5 rounded-xl border bg-green-600/20 border-green-500 text-green-300 text-sm">
+        অভিনন্দন! আপনার জন্য ডেলিভারি চার্জ ফ্রি করা হয়েছে।
+      </div>
+    </section>
+
+
+      )
+      : (
+ 
+    <section>
+      <h2 className="text-xs text-gray-400 mb-2 uppercase tracking-wide">ডেলিভারি মেথড</h2>
+
+      <div className="space-y-2">
+        {/* Dhaka */}
+        <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition ${
+          deliveryType === "insideDhaka"
+            ? "border-blue-500 bg-blue-500/10"
+            : "border-gray-700 bg-[#18181b] hover:border-gray-500"
+        }`}>
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={deliveryType === "insideDhaka"}
+              onChange={() => setDeliveryType("insideDhaka")}
+            />
+            <span className="text-sm">ঢাকার ভিতরে</span>
+          </div>
+          <span className="text-sm">৳60</span>
+        </label>
+
+        {/* Outside Dhaka */}
+        <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition ${
+          deliveryType === "outsideDhaka"
+            ? "border-blue-500 bg-blue-500/10"
+            : "border-gray-700 bg-[#18181b] hover:border-gray-500"
+        }`}>
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={deliveryType === "outsideDhaka"}
+              onChange={() => setDeliveryType("outsideDhaka")}
+            />
+            <span className="text-sm">ঢাকার বাইরে</span>
+          </div>
+          <span className="text-sm">৳120</span>
+        </label>
+      </div>
+    </section>
+    
+      )
+    }
+
+    {/* TOTAL */}
+    <div className="bg-[#18181b] p-3 rounded-xl border border-gray-700">
+      <div className="flex justify-between text-gray-300 text-sm">
+        <span>সাবটোটাল</span>
+        <span>৳{selectedProduct.price}</span>
+      </div>
+
+      <div className="flex justify-between text-gray-300 text-sm mt-1">
+        <span>ডেলিভারি</span>
+        <span>৳{deliveryCharge}</span>
+      </div>
+
+      <div className="h-[1px] bg-gray-700 my-2"></div>
+
+      <div className="flex justify-between text-lg font-bold">
+        <span>সর্বমোট</span>
+        <span className="text-blue-400">৳{total}</span>
       </div>
     </div>
   </div>
-);
+
+  {/* BOTTOM BUTTON */}
+  <div className="p-4 bg-[#0B0B0D] border-t border-gray-800  w-full mx-auto">
+    <button
+      onClick={handleSubmit}
+      className="
+        w-full py-3 rounded-xl font-bold text-lg 
+        bg-gradient-to-r from-orange-600 to-indigo-600 
+        shadow-lg shadow-blue-700/40
+        animate-pulse hover:animate-none
+        hover:brightness-110 hover:-translate-y-0.5 
+        transition-all duration-200
+      "
+    >
+      অর্ডার কনফার্ম করুন - ৳{total}
+    </button>
+  </div>
+</div>
+
+  );
 }

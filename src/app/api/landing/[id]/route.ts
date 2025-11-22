@@ -29,9 +29,9 @@ export async function GET(
   try {
     await connectToDatabase();
 
-    const landing = await LandingPageContent.findById(id)
-      .populate<{ products: IProduct[] }>("products", "_id name price slug images stock isActive")
-      .lean();
+const landing = await LandingPageContent.findById(id).
+populate("products").lean();
+
 
     if (!landing) {
       return NextResponse.json({ error: "Landing page not found" }, { status: 404 });
@@ -62,11 +62,10 @@ export async function PATCH(
     if (Array.isArray(body.faqData)) updates.faqData = sortByOrder(body.faqData);
 
     // Normalize products array
-    if (Array.isArray(body.products)) {
-      updates.products = body.products
-        .map((id: string) => (mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null))
-        .filter(Boolean);
-    }
+if (Array.isArray(body.products)) {
+  updates.products = body.products; // <-- store full product objects
+}
+
 
     const updated = await LandingPageContent.findByIdAndUpdate(
       id,
