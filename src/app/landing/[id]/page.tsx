@@ -74,10 +74,9 @@ export default async function LandingPage({ params }: IdParams) {
   const { id } = await params;
 
   try {
-    const res = await fetch(`${SITE_URL}/api/landing/${id}`, {
-      cache: "force-cache", // always fresh content
-      next: { revalidate: 60 }, // revalidate every 60 seconds
-    });
+    const res = await fetch(`${SITE_URL}/api/landing/${id}`,
+      { cache: "no-store" }
+    );
 
     if (!res.ok) {
       console.warn(`❌ Landing page not found (status ${res.status})`);

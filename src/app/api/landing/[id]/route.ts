@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { LandingPageContent } from "@/models/Landing";
-import mongoose from "mongoose";
+
 import type { IProduct } from "@/types/index";
 import "@/models/Product";
+import { Product } from "@/models/Product";
 
 export interface IParams  { params: Promise<{ id: string }> }
 // ---- Helpers ----
@@ -29,9 +30,9 @@ export async function GET(
   try {
     await connectToDatabase();
 
-const landing = await LandingPageContent.findById(id).
-populate("products").lean();
-
+const landing = await LandingPageContent.findById(id)
+  .populate("products")
+  .lean();
 
     if (!landing) {
       return NextResponse.json({ error: "Landing page not found" }, { status: 404 });

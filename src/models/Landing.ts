@@ -45,10 +45,14 @@ const LandingPageContentSchema = new Schema<ILandingPageContent>(
     logoUrl: { type: String, default: "" },
     videoUrl: { type: String, default: "" },
     ctaText: { type: String, default: "Order Now" },
-products: {
-  type: [mongoose.Schema.Types.Mixed],
-  default: [],
-},
+products: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: false,
+  }
+],
+
 
     sections: { type: [SectionSchema], default: [] },
     section1Title: { type: String },
