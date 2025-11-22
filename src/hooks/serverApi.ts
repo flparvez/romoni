@@ -1,7 +1,7 @@
 // lib/serverApi.ts
 
-// export const SITE_URL = "https://a1romoni.xyz";
-export const SITE_URL = "http://localhost:3000";
+export const SITE_URL = "https://a1romoni.xyz";
+// export const SITE_URL = "http://localhost:3000";
 
 
 export async function serverApi<T = any>(
