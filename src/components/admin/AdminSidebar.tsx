@@ -79,7 +79,7 @@ export function AdminSidebar() {
       {/* MOBILE HEADER (Visible only on mobile) */}
       <div className="md:hidden flex items-center justify-between px-4 h-16 border-b bg-white sticky top-0 z-40">
         <div className="flex items-center gap-2">
-           <span className="font-bold text-xl text-primary">Unique Store</span>
+           <span className="font-bold text-xl text-primary">A1 Romoni</span>
         </div>
         <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-gray-100 rounded-md">
           <Menu className="h-6 w-6 text-gray-700" />
@@ -123,7 +123,7 @@ export function AdminSidebar() {
       {/* DESKTOP SIDEBAR (Static) */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-white h-screen sticky top-0">
         <div className="h-16 flex items-center px-6 border-b bg-white z-10">
-          <span className="font-bold text-xl tracking-tight text-primary">Unique Store BD</span>
+          <span className="font-bold text-xl tracking-tight text-primary"> A1 Romoni</span>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">

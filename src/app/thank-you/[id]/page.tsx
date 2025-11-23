@@ -39,17 +39,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!order) {
     return {
-      title: "Order Not Found | Unique Store BD",
+      title: "Order Not Found |  A1 Romoni",
       description: "The requested order could not be found.",
     };
   }
 
   return {
-    title: `Order #${order.orderId} Confirmed | Unique Store BD`,
+    title: `Order #${order.orderId} Confirmed | A1 Romoni`,
     description: `Thank you! Your order #${order.orderId} has been successfully placed.`,
     openGraph: {
       title: `${order.fullName} | Order #${order.orderId} Confirmed`,
-      description: `Thank you for shopping with Unique Store BD. Your order #${order.orderId} is confirmed.`,
+      description: `Thank you for shopping with A1 Romoni. Your order #${order.orderId} is confirmed.`,
       images: order.items[0].product.images[0].url
         ? [
             {

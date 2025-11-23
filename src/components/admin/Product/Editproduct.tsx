@@ -100,7 +100,7 @@ const EditProduct = ( {id }: { id: string }) => {
 
             const catData = await catRes.json();
             const prodData = await prodRes.json();
-            
+          
             if (!prodRes.ok) throw new Error("Product fetch failed");
             
             setCategories(catData.categories || []);

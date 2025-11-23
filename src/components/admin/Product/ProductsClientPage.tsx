@@ -61,7 +61,7 @@ const ProductRow = React.memo(({ p, index, page, onDelete, onDuplicate }: {
         </span>
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-1 ">
           <Link
             href={`/admin/products/edit/${p._id}`}
             className="p-2 rounded-md hover:bg-blue-50 text-blue-600 transition"
