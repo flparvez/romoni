@@ -1,37 +1,57 @@
-// app/admin/orders/page.tsx
+import { Suspense } from "react";
 import { SITE_URL } from "@/hooks/serverApi";
 import AllOrders from "./AllOrders";
-import { Suspense } from "react";
 import ProductListSkeleton from "@/components/Skelton";
 
-// Small helper to fetch orders (no caching so Admin always sees fresh data)
-async function getOrders() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+// Helper to fetch orders based on URL Params
+async function getOrders(searchParams: any) {
+  const page = searchParams?.page || 1;
+  const status = searchParams?.status || "ALL";
+  const limit = 12;
+
   try {
-    const res = await fetch(`${SITE_URL}/api/orders`, {
-      cache: "force-cache" , next: { revalidate: 60}
+    // Pass query params to API for Server-Side Filtering
+    const query = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      status: String(status),
     });
-    if (!res.ok) throw new Error(`Failed to fetch orders (${res.status})`);
+
+    const res = await fetch(`${SITE_URL}/api/orders?${query.toString()}`, {
+      cache: "no-store", // Admin needs real-time data
+    });
+
+    if (!res.ok) throw new Error("Failed");
 
     const data = await res.json();
-   
     return {
       orders: data?.orders || [],
       counts: data?.counts || {},
+      totalPages: data?.totalPages || 1,
+      currentPage: Number(page),
     };
   } catch (error) {
     console.error("❌ Orders Fetch Error:", error);
-    return { orders: [], counts: {} };
+    return { orders: [], counts: {}, totalPages: 1, currentPage: 1 };
   }
 }
 
-export default async function OrdersPage() {
-  const { orders, counts } = await getOrders();
+export default async function OrdersPage(props: { searchParams: SearchParams }) {
+  const searchParams = await props.searchParams;
+  const { orders, counts, totalPages, currentPage } = await getOrders(searchParams);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-0">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-gray-50/50 p-0 pb-20">
+      <div className="max-w-[1600px] mx-auto">
         <Suspense fallback={<ProductListSkeleton />}>
-          <AllOrders initialOrders={orders} initialCounts={counts} />
+          <AllOrders 
+            initialOrders={orders} 
+            initialCounts={counts} 
+            totalPages={totalPages}
+            currentPage={currentPage}
+          />
         </Suspense>
       </div>
     </main>

@@ -1,21 +1,39 @@
+import { Suspense } from "react";
 import ProductsClientPage from "@/components/admin/Product/ProductsClientPage";
 import { SITE_URL } from "@/hooks/serverApi";
-import { Suspense } from "react";
 import ProductListSkeleton from "@/components/Skelton";
 
-export default async function AdminProductsPage() {
-  const page = 1;
-  const limit = 20;
+// Define Page Props to catch Search Params
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 
-  // Use the correct route: /api/products
-  const res = await fetch(
-    `${SITE_URL}/api/products?page=${page}&limit=${limit}`,
-    { cache: "force-cache", next: { revalidate: 60 } }
-  );
+export default async function AdminProductsPage(props: {
+  searchParams: SearchParams
+}) {
+  const searchParams = await props.searchParams
+  
+  // Parse Query Params
+  const page = Number(searchParams.page) || 1;
+  const limit = 20;
+  const search = typeof searchParams.search === "string" ? searchParams.search : "";
+  const sort = typeof searchParams.sort === "string" ? searchParams.sort : "latest";
+  const category = typeof searchParams.category === "string" ? searchParams.category : "";
+  
+  // Build Query String for Server Fetch
+  const query = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    search,
+    sort,
+    ...(category && { category }),
+  });
+
+  // Initial Fetch on Server (Super Fast)
+  const res = await fetch(`${SITE_URL}/api/products?${query.toString()}`, {
+    cache: "no-store", // Ensure fresh data on navigation
+  });
 
   if (!res.ok) {
-    console.error("Failed to fetch initial products");
-    return <div className="p-6 text-center">Failed to load products</div>;
+    return <div className="p-10 text-center text-red-500">Failed to load products. Please check API.</div>;
   }
 
   const data = await res.json();
@@ -23,9 +41,9 @@ export default async function AdminProductsPage() {
   return (
     <Suspense fallback={<ProductListSkeleton />}>
       <ProductsClientPage
-        initialProducts={data.products}
-        initialPage={data.currentPage}
-        initialTotalPages={data.totalPages}
+        initialProducts={data.products || []}
+        initialPage={data.currentPage || 1}
+        initialTotalPages={data.totalPages || 1}
       />
     </Suspense>
   );

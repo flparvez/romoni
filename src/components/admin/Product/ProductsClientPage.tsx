@@ -1,12 +1,97 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Search, MoreHorizontal, Copy, Trash2, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useCallback, useMemo, useTransition } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, MoreHorizontal, Copy, Trash2, RefreshCw, Loader2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import type { IProduct } from "@/types/index";
 import { Pagination } from "@/components/admin/pagination";
+
+// --- Components ---
+
+// Memoized Product Row for Performance
+const ProductRow = React.memo(({ p, index, page, onDelete, onDuplicate }: { 
+  p: IProduct; 
+  index: number; 
+  page: number;
+  onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
+}) => {
+  return (
+    <motion.tr
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="border-b last:border-b-0 hover:bg-gray-50 group"
+    >
+      <td className="px-4 py-3 text-sm text-gray-500">{(page - 1) * 20 + index + 1}</td>
+      <td className="px-4 py-3">
+        <div className="relative w-12 h-12 rounded-lg overflow-hidden border bg-gray-100">
+           {/* Optimized Image */}
+          <Image 
+            src={p.images?.[0]?.url || "/placeholder.jpg"} 
+            alt={p.name} 
+            fill
+            sizes="48px"
+            className="object-cover"
+            loading="lazy"
+          />
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <Link href={`/admin/products/edit/${p._id}`} className="font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-1">
+          {p.name}
+        </Link>
+        <div className="text-xs text-gray-500">{p.shortName || "No Shortname"}</div>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-600">
+        <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+            {p.category?.name || "Uncategorized"}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-sm font-bold text-gray-800">৳{p.price}</td>
+      <td className="px-4 py-3 text-sm">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.stock > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+             {p.stock} In Stock
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Link
+            href={`/admin/products/edit/${p._id}`}
+            className="p-2 rounded-md hover:bg-blue-50 text-blue-600 transition"
+            title="Edit"
+          >
+            <Edit size={15} />
+          </Link>
+          <button
+            onClick={() => onDuplicate(p._id)}
+            className="p-2 rounded-md hover:bg-gray-100 text-gray-600 transition"
+            title="Duplicate"
+          >
+            <Copy size={15} />
+          </button>
+          <button
+            onClick={() => onDelete(p._id)}
+            className="p-2 rounded-md hover:bg-red-50 text-red-600 transition"
+            title="Delete"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </td>
+    </motion.tr>
+  );
+});
+ProductRow.displayName = "ProductRow";
+
+
+// --- Main Page Component ---
 
 type Props = {
   initialProducts: IProduct[];
@@ -14,325 +99,216 @@ type Props = {
   initialTotalPages: number;
 };
 
-const useDebounce = <T,>(value: T, delay = 500): T => {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return v;
-};
-
 export default function ProductsClientPage({
   initialProducts,
   initialPage,
   initialTotalPages,
 }: Props) {
-  // Data + paging
-  const [products, setProducts] = useState<IProduct[]>(initialProducts || []);
-  const [page, setPage] = useState<number>(initialPage || 1);
-  const [totalPages, setTotalPages] = useState<number>(initialTotalPages || 1);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // UI state
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const debouncedSearch = useDebounce(searchTerm, 500);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [sort, setSort] = useState<string>("latest");
-  const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
-  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
-  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
-  const [refreshKey, setRefreshKey] = useState(0);
+  // State
+  const [products, setProducts] = useState<IProduct[]>(initialProducts);
+  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition(); // For smooth URL updates
+  
+  // Sync State from URL Params
+  const page = Number(searchParams.get("page")) || initialPage;
+  const searchTerm = searchParams.get("search") || "";
+  const sort = searchParams.get("sort") || "latest";
 
-  // Build query string
-  const buildQuery = useCallback(
-    (p = page, q = debouncedSearch) => {
-      const params = new URLSearchParams();
-      params.set("page", String(p));
-      params.set("limit", "20");
-      if (q) params.set("search", q);
-      if (sort) params.set("sort", sort);
-      if (categoryFilter) params.set("category", categoryFilter);
-      if (isActiveFilter !== undefined) params.set("isActive", String(isActiveFilter));
-      if (minPrice !== undefined) params.set("minPrice", String(minPrice));
-      if (maxPrice !== undefined) params.set("maxPrice", String(maxPrice));
-      return `/api/products?${params.toString()}`;
-    },
-    [page, debouncedSearch, sort, categoryFilter, isActiveFilter, minPrice, maxPrice]
-  );
+  // Local Search State for Debouncing
+  const [localSearch, setLocalSearch] = useState(searchTerm);
 
-  // Fetch function
-  const fetchProducts = useCallback(
-    async (p = 1, q = "") => {
-      setLoading(true);
-      try {
-        const url = buildQuery(p, q);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const data = await res.json();
-        setProducts(data.products || []);
-        setPage(data.currentPage || p);
-        setTotalPages(data.totalPages || 1);
-      } catch (err: any) {
-        console.error(err);
-        toast.error(err?.message || "Failed to fetch products");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [buildQuery]
-  );
-
-  // Initial and refresh fetch
+  // Sync Products when props change (Server Refetch)
   useEffect(() => {
-    fetchProducts(page, debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, sort, categoryFilter, isActiveFilter, minPrice, maxPrice, refreshKey]);
+    setProducts(initialProducts);
+  }, [initialProducts]);
 
-  // Handle page change
-  const handlePageChange = (p: number) => {
-    window.scrollTo({ top: 0, behavior: "smooth" }); // auto scroll to top
-    fetchProducts(p, debouncedSearch);
+  // --- URL Update Logic (The Source of Truth) ---
+  const updateURL = useCallback((params: Record<string, string | number | undefined>) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === "") {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, String(value));
+      }
+    });
+
+    // Reset to page 1 if filter changes (except page itself)
+    if (!params.page && params.page !== 0) { 
+        newParams.set("page", "1");
+    }
+
+    startTransition(() => {
+        router.push(`${pathname}?${newParams.toString()}`);
+    });
+  }, [pathname, router, searchParams]);
+
+  // Debounced Search Effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== searchTerm) {
+        updateURL({ search: localSearch });
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localSearch, searchTerm, updateURL]);
+
+  // --- Actions ---
+
+  const handleRefresh = () => {
+    setLoading(true);
+    router.refresh(); // Re-fetches server component
+    setTimeout(() => setLoading(false), 800);
+    toast.success("List refreshed");
   };
 
-  // Actions
-  const duplicateProduct = async (id: string) => {
+  const handleDuplicate = async (id: string) => {
     if (!confirm("Duplicate this product?")) return;
-    setLoading(true);
+    setLoading(true); // Show global loading
     try {
       const res = await fetch(`/api/products/duplicate/${id}`, { method: "POST" });
-      if (!res.ok) throw new Error("Duplicate failed");
+      if (!res.ok) throw new Error("Failed");
       toast.success("Product duplicated");
-      setRefreshKey((k) => k + 1);
-    } catch (err: any) {
-      toast.error(err.message || "Duplicate failed");
+      router.refresh();
+    } catch {
+      toast.error("Duplicate failed");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
-  const deleteProduct = async (id: string) => {
-    if (!confirm("Delete this product permanently?")) return;
-    setLoading(true);
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete permanently?")) return;
+    
+    // ⚡ Optimistic Update: Remove from UI immediately
+    const previousProducts = [...products];
+    setProducts(prev => prev.filter(p => p._id !== id));
+
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+      if (!res.ok) throw new Error("Failed");
       toast.success("Product deleted");
-      setProducts((prev) => prev.filter((p) => p._id !== id));
-    } catch (err: any) {
-      toast.error(err.message || "Delete failed");
-    } finally {
-      setLoading(false);
+      router.refresh(); // Sync with server in background
+    } catch {
+      setProducts(previousProducts); // Rollback on error
+      toast.error("Delete failed");
     }
   };
 
-  const refresh = () => setRefreshKey((k) => k + 1);
-
-  // Chips collection (for UI display)
-  const chips = useMemo(() => {
-    const out: { key: string; label: string }[] = [];
-    if (debouncedSearch) out.push({ key: "q", label: `Search: "${debouncedSearch}"` });
-    if (categoryFilter) out.push({ key: "cat", label: `Category: ${categoryFilter}` });
-    if (isActiveFilter !== undefined) out.push({ key: "active", label: isActiveFilter ? "Active" : "Inactive" });
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      out.push({ key: "price", label: `Price: ${minPrice ?? 0} - ${maxPrice ?? "∞"}` });
-    }
-    if (sort && sort !== "latest") out.push({ key: "sort", label: `Sort: ${sort.replace("_", " ")}` });
-    return out;
-  }, [debouncedSearch, categoryFilter, isActiveFilter, minPrice, maxPrice, sort]);
-
-  // Loading skeleton row
-  const SkeletonRows = () => (
-    <div className="p-6">
-      {[...Array(6)].map((_, i) => (
-        <motion.div key={i} className="flex gap-4 items-center mb-4" initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, repeatType: "mirror", duration: 1.2 }}>
-          <div className="w-12 h-12 bg-gray-200 rounded-md animate-pulse" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 w-1/3 rounded animate-pulse" />
-            <div className="h-3 bg-gray-200 w-1/6 rounded animate-pulse" />
-          </div>
-          <div className="w-20 h-6 bg-gray-200 rounded animate-pulse" />
-        </motion.div>
-      ))}
-    </div>
-  );
+  // --- Render ---
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Sticky top: Search + Controls */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 py-3">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-3 items-center justify-between px-2">
-          {/* Left: Search */}
-          <div className="flex items-center gap-3 w-full md:w-2/3">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                aria-label="Search products"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search products by name, short name or tag..."
-                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="rounded-lg border px-3 py-2 text-sm"
-                title="Sort products"
-              >
-                <option value="latest">Latest</option>
-                <option value="price_asc">Price: Low → High</option>
-                <option value="price_desc">Price: High → Low</option>
-                <option value="best_selling">Best Selling</option>
-                <option value="popular">Popular</option>
-              </select>
-
-              <button
-                onClick={() => { setSearchTerm(""); setCategoryFilter(undefined); setIsActiveFilter(undefined); setMinPrice(undefined); setMaxPrice(undefined); setSort("latest"); }}
-                className="text-sm px-3 py-2 rounded-lg border bg-white hover:bg-gray-50"
-                title="Clear filters"
-              >
-                Clear
-              </button>
-
-              <button
-                onClick={refresh}
-                className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow"
-                title="Refresh"
-              >
-                <RefreshCw size={16} /> Refresh
-              </button>
-            </div>
+    <div className="w-full pb-20">
+      
+      {/* 1. Header & Controls */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b px-6 py-4">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center max-w-7xl mx-auto">
+          
+          {/* Search */}
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder="Search products..."
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+            />
           </div>
 
-          {/* Right: Quick create */}
-          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-            <Link href="/admin/products/new" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium shadow hover:bg-green-700">
+          {/* Actions */}
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <select
+              value={sort}
+              onChange={(e) => updateURL({ sort: e.target.value })}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary cursor-pointer"
+            >
+              <option value="latest">Latest</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="sold">Best Selling</option>
+            </select>
+
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+              title="Refresh"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading || isPending ? "animate-spin" : ""}`} />
+            </button>
+
+            <Link 
+              href="/admin/products/create" 
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition shadow-sm whitespace-nowrap"
+            >
               + Add Product
             </Link>
           </div>
         </div>
-
-        {/* Filter Chips */}
-        <div className="max-w-7xl mx-auto px-2 mt-3">
-          <div className="flex flex-wrap gap-2">
-            {chips.map((c) => (
-              <div key={c.key} className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm">
-                <span>{c.label}</span>
-                <button
-                  onClick={() => {
-                    if (c.key === "q") setSearchTerm("");
-                    if (c.key === "cat") setCategoryFilter(undefined);
-                    if (c.key === "active") setIsActiveFilter(undefined);
-                    if (c.key === "price") { setMinPrice(undefined); setMaxPrice(undefined); }
-                    if (c.key === "sort") setSort("latest");
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="mt-6 bg-white rounded-xl shadow border overflow-hidden">
-        {/* header */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Products</h2>
-            <p className="text-sm text-gray-500">{products.length} items displayed</p>
-          </div>
-          <div className="text-sm text-gray-500">Page {page} of {totalPages}</div>
-        </div>
+      {/* 2. Product Table */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
+        <div className="bg-white rounded-xl border shadow-sm overflow-hidden relative min-h-[400px]">
+          
+          {/* Loading Overlay */}
+          {(isPending || loading) && (
+            <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center backdrop-blur-[1px]">
+               <Loader2 className="w-8 h-8 text-primary animate-spin"/>
+            </div>
+          )}
 
-        {loading ? (
-          <SkeletonRows />
-        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto">
-              <thead className="bg-gray-50">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50/50 border-b">
                 <tr>
-                  <th className="px-4 py-3 w-12">#</th>
-                  <th className="px-4 py-3 w-20">Image</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Price</th>
-                  <th className="px-4 py-3">Stock</th>
-           
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider w-12">#</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider w-20">Image</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider">Product Info</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider">Stock</th>
+                  <th className="px-4 py-3 font-medium text-xs text-gray-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-
-              <tbody>
-                {products.map((p, i) => (
-                  <motion.tr key={p._id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="border-b last:border-b-0 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-600">{(page - 1) * 20 + i + 1}</td>
-
-                    <td className="px-4 py-3">
-                      <div className="w-16 h-12 rounded-md overflow-hidden bg-gray-100">
-                        <img src={p.images?.[0]?.url || "/placeholder.jpg"} alt={p.name} className="w-full h-full object-cover" />
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900"> <Link href={`/admin/products/edit/${p._id}`} onClick={(e) => e.stopPropagation()} >{p.name} </Link></div>
-                      <div className="text-xs text-gray-500">{p.shortName}</div>
-                    </td>
-
-                    <td className="px-4 py-3 text-sm text-gray-700"> {p.category?.name || "—"}</td>
-
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">৳{p.price}</td>
-
-                    <td className="px-4 py-3 text-sm">{p.stock}</td>
-
-                   
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <Link href={`/admin/products/edit/${p._id}`} onClick={(e) => e.stopPropagation()} className="px-3 py-1 rounded-md border text-sm">Edit</Link>
-
-                        <button
-                          onClick={async (e) => { e.stopPropagation(); await duplicateProduct(p._id); }}
-                          className="px-3 py-1 rounded-md border text-sm"
-                          title="Duplicate"
-                        >
-                          <Copy size={14} />
-                        </button>
-
-                        <button
-                          onClick={async (e) => { e.stopPropagation(); await deleteProduct(p._id); }}
-                          className="px-3 py-1 rounded-md border text-sm text-red-600"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-
-                        <div className="relative">
-                          <button title="More" className="p-1 rounded-md border" onClick={(e) => { e.stopPropagation(); /* you can implement dropdown menu here */ }}>
-                            <MoreHorizontal size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+              <tbody className="divide-y divide-gray-100">
+                <AnimatePresence initial={false}>
+                  {products.length > 0 ? (
+                    products.map((product, index) => (
+                      <ProductRow
+                        key={product._id}
+                        p={product}
+                        index={index}
+                        page={page}
+                        onDelete={handleDelete}
+                        onDuplicate={handleDuplicate}
+                      />
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                        No products found matching your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
-        )}
 
-        {/* Footer / pagination area */}
-        <div className="p-3 mb-6 border-t flex flex-col md:flex-row items-center gap-3 justify-between">
-          <div className="text-sm text-gray-600">Showing {(page - 1) * 20 + 1} - {Math.min(page * 20, (totalPages * 20))} of approx {totalPages * 20}</div>
-          <div>
+          {/* Footer / Pagination */}
+          <div className="border-t px-4 py-3 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-sm text-gray-600">
+               Page {page} of {initialTotalPages}
+            </span>
             <Pagination
               currentPage={page}
-              totalPages={totalPages}
-              onPageChange={(p) => handlePageChange(p)}
+              totalPages={initialTotalPages}
+              onPageChange={(p) => updateURL({ page: p })}
             />
           </div>
         </div>

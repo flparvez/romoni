@@ -68,6 +68,10 @@ export interface IProduct extends Document {
   _id: string;
   name: string;
   slug: string;
+  costPrice?: number;
+  lowStockThreshold?: number;
+  sku?: string;
+  barcode?: string;
   shortName?: string;
   description?: string;
 

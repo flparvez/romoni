@@ -4,7 +4,8 @@ import { Order } from "@/models/Order";
 import webpush from "web-push";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { OrderItem } from "@/models/OrderItem";
+// If you are using a separate OrderItem model, keep this, otherwise it might be unused but I kept it as requested
+import { OrderItem } from "@/models/OrderItem"; 
 import { Types } from "mongoose";
 import { User } from "@/models/User";
 import { IPushSubscription } from "@/types";
@@ -60,7 +61,7 @@ async function getSalesAnalytics() {
   ]);
 }
 
-/** ---------------- GET ORDERS ---------------- */
+/** ---------------- GET ORDERS (PAGINATED & FILTERED) ---------------- */
 export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
@@ -68,28 +69,72 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const view = searchParams.get("view"); // ?view=analytics
 
-    // ✅ Analytics view
+    // ✅ Analytics view (Keep existing logic)
     if (view === "analytics") {
       const analyticsData = await getSalesAnalytics();
       return NextResponse.json({ success: true, analytics: analyticsData });
     }
 
-    // ✅ All orders list
-    const orders = await Order.find({})
-      .populate({
-        path: "items",
-        populate: { path: "product", model: "Product" }
-      })
-      .sort({ createdAt: -1 })
-      .lean(); // Convert to plain JS object (faster + safe JSON)
+    // ✅ Extract Pagination & Filter Params
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "12");
+    const status = searchParams.get("status") || "ALL";
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ success: true, orders });
+    // 1. Build Query Filter
+    const query: any = {};
+    if (status !== "ALL") {
+      query.status = status;
+    }
+
+    // 2. Parallel Execution for Speed:
+    //    a) Fetch Orders (Paginated)
+    //    b) Count specific filtered orders (for pagination)
+    //    c) Aggregate ALL Status Counts (for Tabs)
+    const [orders, totalFilteredCount, statusStats] = await Promise.all([
+      Order.find(query)
+        .populate({
+          path: "items",
+          populate: { path: "product", model: "Product", select: "name images" } // Optimization: Select only needed fields
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      
+      Order.countDocuments(query),
+      
+      Order.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    // 3. Format Status Counts Object
+    const counts: Record<string, number> = { ALL: 0 };
+    let totalAll = 0;
+
+    statusStats.forEach((stat) => {
+      counts[stat._id] = stat.count;
+      totalAll += stat.count;
+    });
+    counts["ALL"] = totalAll;
+
+    // 4. Calculate Pagination Info
+    const totalPages = Math.ceil(totalFilteredCount / limit);
+
+    return NextResponse.json({ 
+      success: true, 
+      orders, 
+      counts, 
+      totalPages, 
+      currentPage: page 
+    });
+
   } catch (error) {
     console.error("❌ Get Orders API Error:", error);
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
   }
 }
-
 
 
 

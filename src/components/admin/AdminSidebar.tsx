@@ -12,14 +12,17 @@ import {
   Settings,
   Menu,
   X,
-  ChevronDown,
+  ChevronRight,
+  LogOut,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils"; // Assuming you have a cn utility, or use basic string concat
 
+// ===== Navigation Data =====
 interface NavItem {
   label: string;
-  href?: string;
+  href: string;
   icon: React.ElementType;
   children?: { label: string; href: string }[];
 }
@@ -50,7 +53,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Package,
     children: [
       { label: "All Products", href: "/admin/products" },
-      { label: "Create", href: "/admin/products/new" },
+      { label: "Add Product", href: "/admin/products/create" },
       { label: "Variants", href: "/admin/products/variant" },
     ],
   },
@@ -67,107 +70,177 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
+// ===== Main Component =====
 export function AdminSidebar() {
-  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* MOBILE HEADER */}
-      <div className="md:hidden flex items-center justify-between px-4 h-14 border-b bg-white">
-        <button onClick={() => setMobileOpen(true)}>
-          <Menu className="h-6 w-6" />
+      {/* MOBILE HEADER (Visible only on mobile) */}
+      <div className="md:hidden flex items-center justify-between px-4 h-16 border-b bg-white sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+           <span className="font-bold text-xl text-primary">Unique Store</span>
+        </div>
+        <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-gray-100 rounded-md">
+          <Menu className="h-6 w-6 text-gray-700" />
         </button>
-        <span className="font-semibold text-lg">Admin Panel</span>
       </div>
 
-      {/* MOBILE SIDEBAR */}
+      {/* MOBILE OVERLAY & SIDEBAR */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.aside
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r shadow-lg p-4"
-          >
-            <div className="flex items-center justify-between h-12 border-b mb-4">
-              <span className="font-semibold text-lg">Menu</span>
-              <button onClick={() => setMobileOpen(false)}>
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <SidebarMenu pathname={pathname} />
-
-          </motion.aside>
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 bg-black/50 z-50 md:hidden"
+            />
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between h-16 px-6 border-b">
+                <span className="font-bold text-xl">Menu</span>
+                <button onClick={() => setMobileOpen(false)} className="p-1 hover:bg-red-50 hover:text-red-500 rounded-md transition">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <SidebarMenu isMobile={true} closeMobile={() => setMobileOpen(false)} />
+              </div>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-64 border-r bg-white p-4">
-        <div className="h-14 flex items-center font-semibold text-lg border-b mb-4">
-          Admin Panel
+      {/* DESKTOP SIDEBAR (Static) */}
+      <aside className="hidden md:flex flex-col w-64 border-r bg-white h-screen sticky top-0">
+        <div className="h-16 flex items-center px-6 border-b bg-white z-10">
+          <span className="font-bold text-xl tracking-tight text-primary">Unique Store BD</span>
         </div>
 
-        <SidebarMenu pathname={pathname} />
+        <div className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+          <SidebarMenu />
+        </div>
+
+        <div className="p-4 border-t bg-gray-50">
+            <button className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                <LogOut className="w-4 h-4" />
+                Logout
+            </button>
+        </div>
       </aside>
     </>
   );
 }
 
-function SidebarMenu({ pathname }: { pathname: string }) {
-  const [open, setOpen] = useState<string | null>(null);
+// ===== Menu Logic Component =====
+function SidebarMenu({ isMobile, closeMobile }: { isMobile?: boolean, closeMobile?: () => void }) {
+  const pathname = usePathname();
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // ✅ Auto-Expand Logic: Automatically opens the dropdown if current page is inside it
+  useEffect(() => {
+    const activeParent = NAV_ITEMS.find(item => 
+        item.children?.some(child => pathname.startsWith(child.href))
+    );
+    if (activeParent) {
+        setExpanded(activeParent.label);
+    }
+  }, [pathname]);
+
+  const toggleExpand = (label: string) => {
+    setExpanded(prev => prev === label ? null : label);
+  };
 
   return (
-    <nav className="space-y-1 text-sm">
+    <nav className="space-y-1.5">
       {NAV_ITEMS.map((item) => {
-        const isActive = item.href && pathname.startsWith(item.href);
-        const isOpen = open === item.label;
+        const isParentActive = item.href === pathname || item.children?.some(c => pathname.startsWith(c.href));
+        const isOpen = expanded === item.label;
 
         return (
           <div key={item.label}>
-            <button
-              onClick={() => (item.children ? setOpen(isOpen ? null : item.label) : undefined)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition ${
-                isActive ? "bg-primary/10 text-primary" : "hover:bg-gray-100"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
-                {item.href ? <Link href={item.href}>{item.label}</Link> : item.label}
-              </div>
-
-              {item.children && (
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            {/* Parent Item */}
+            {item.children ? (
+               // Dropdown Parent
+              <button
+                onClick={() => toggleExpand(item.label)}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  isParentActive 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn("h-5 w-5", isParentActive ? "text-primary" : "text-gray-500 group-hover:text-gray-700")} />
+                  {item.label}
+                </div>
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200 text-gray-400",
+                    isOpen && "rotate-90 text-primary"
+                  )}
                 />
-              )}
-            </button>
+              </button>
+            ) : (
+              // Single Link
+              <Link
+                href={item.href}
+                onClick={isMobile ? closeMobile : undefined}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  pathname === item.href
+                    ? "bg-primary text-white shadow-md shadow-blue-200"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5", pathname === item.href ? "text-white" : "text-gray-500 group-hover:text-gray-700")} />
+                {item.label}
+              </Link>
+            )}
 
-            {/* CHILDREN */}
+            {/* Children Dropdown */}
             <AnimatePresence>
               {isOpen && item.children && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="ml-8 mt-1 space-y-1"
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="overflow-hidden"
                 >
-                  {item.children.map((sub) => (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      className={`block px-3 py-1 rounded-md ${
-                        pathname.startsWith(sub.href)
-                          ? "text-primary font-medium"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
+                  <div className="pl-10 pr-2 py-1 space-y-1 relative">
+                    {/* Vertical Line for Tree View */}
+                    <div className="absolute left-[22px] top-0 bottom-0 w-[1.5px] bg-gray-200" />
+                    
+                    {item.children.map((sub) => {
+                       const isChildActive = pathname === sub.href;
+                       return (
+                        <Link
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={isMobile ? closeMobile : undefined}
+                            className={cn(
+                            "block px-3 py-2 rounded-md text-sm transition-colors relative",
+                            isChildActive
+                                ? "text-primary font-semibold bg-blue-50"
+                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                            )}
+                        >
+                            {sub.label}
+                        </Link>
+                       )
+                    })}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

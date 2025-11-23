@@ -1,29 +1,15 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  FiExternalLink,
-  FiTrash2,
-  FiChevronDown,
-  FiChevronUp,
-  FiPrinter,
-  FiShield,
-} from "react-icons/fi";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FiExternalLink, FiTrash2, FiChevronDown, FiChevronUp, FiPrinter, FiShield, FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import FraudCheck from "./FraudCheck";
+import FraudCheck from "./FraudCheck"; // Ensure this path is correct
 import { generateInvoicePdf } from "@/hooks/invoiceGenerator";
 import type { IOrder } from "@/types/index";
+
 type Status = "PENDING" | "APPROVED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 type Props = {

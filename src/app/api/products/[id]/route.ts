@@ -1,211 +1,216 @@
-
+import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
-import type { IdParams } from "@/types/index";
+import { Category } from "@/models/Category"; // ✅ Import Category model for lookup
+import slugify from "slugify";
 
-import { revalidatePath } from "next/cache";
-
-import { NextRequest, NextResponse } from "next/server";
-// Define the expected types for the request body
-interface IVariantOption {
-  value: string;
-  price?: number;
-  stock?: number;
-  sku?: string;
-}
-
-interface IVariant {
-  name: string;
-  options: IVariantOption[];
-}
-// Helper function to safely cast to number
-const safeNumber = (value: any, defaultValue: number = 0): number => {
-    const num = Number(value);
-    return isNaN(num) ? defaultValue : num;
-};
-
-
-// ==========================
-// GET → Fetch single product by ID
-// ==========================
-export async function GET(
-  req: NextRequest,
-  { params }:IdParams
-) {
-  try {
-    await connectToDatabase();
-    const { id } = await params;
-
-    const product = await Product.findById(id).lean();
-
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, product }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch product" },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT → Update product by ID
-// ==========================
-export async function PUT(
-  req: NextRequest,
-  { params }: IdParams
-) {
+// ==========================================
+// POST → Create New Product (Business Ready)
+// ==========================================
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-  const { id } = await params;
+    await connectToDatabase();
 
-    if (!body.name || !body.price || !body.images || body.images.length === 0) {
+    // 1. Basic Validation
+    if (!body.name || !body.price || !body.images?.length || !body.category) {
       return NextResponse.json(
-        { error: "Missing required fields or images empty" },
+        { error: "Missing required fields (Name, Price, Image, Category)" },
         { status: 400 }
       );
     }
 
-    await connectToDatabase();
-// 2. Construct the Update Fields Object
-    // Use an interface for updateFields if available, or 'Record<string, any>'
-    const updateFields: Record<string, any> = {
-      // Basic Fields
+    // 2. ✅ Fetch Category Details (Crucial for Speed optimization)
+    // We store category name/slug inside product to avoid 'populate' queries later
+    const categoryDetails = await Category.findById(body.category);
+    if (!categoryDetails) {
+      return NextResponse.json({ error: "Invalid Category ID" }, { status: 400 });
+    }
+
+    // 3. ✅ Smart Slug Generation (Avoids Collision)
+    const baseSlug = slugify(body.name, { lower: true, strict: true });
+    let slug = baseSlug;
+    let count = 1;
+    while (await Product.exists({ slug })) {
+      slug = `${baseSlug}-${count++}`;
+    }
+
+    // 4. Create Product Object
+    const product = new Product({
       name: body.name,
-      slug: body.slug || body.name.toLowerCase().replace(/\s+/g, "-"),
+      slug,
       shortName: body.shortName || "",
       description: body.description || "",
-      warranty: body.warranty || "",
+      
+      // Pricing & Profit
+      price: Number(body.price),
+      originalPrice: Number(body.originalPrice || body.price),
+      discount: Number(body.discount || 0),
+      costPrice: Number(body.costPrice || 0), // 👈 Profit Tracking
+
+      // Inventory
+      stock: Number(body.stock || 0),
+      lowStockThreshold: Number(body.lowStockThreshold || 5), // 👈 Stock Alert
+      sku: body.sku || `SKU-${Date.now().toString().slice(-6)}`, // Auto SKU if missing
+
+      // Optimized Category Embedding
+      category: {
+        _id: categoryDetails._id,
+        name: categoryDetails.name,
+        slug: categoryDetails.slug,
+      },
+
+      brand: body.brand || "",
       video: body.video || "",
-
-      // Numeric Fields with Type Casting
-      price: safeNumber(body.price),
-      originalPrice: body.originalPrice,
-      stock: safeNumber(body.stock),
-      sold: safeNumber(body.sold, 0), // Default to 0 if not provided
-      popularityScore: safeNumber(body.popularityScore, 0),
-      rating: safeNumber(body.rating, 0),
-      lastUpdatedIndex: body.lastUpdatedIndex ? safeNumber(body.lastUpdatedIndex) : undefined,
-      advanced: safeNumber(body.advanced, 100),
-
-      // Boolean Fields
-      isFreeDelivery: Boolean(body.isFreeDelivery ?? false),
-      isCombo: Boolean(body.isCombo ?? false),
-      isFeatured: Boolean(body.isFeatured ?? false),
+      warranty: body.warranty || "7 days replacement warranty",
+      
+      images: Array.isArray(body.images) ? body.images : [],
+      reviews: Array.isArray(body.reviews) ? body.reviews : [],
+      specifications: Array.isArray(body.specifications) ? body.specifications : [],
+      
+      rating: Number(body.rating || 0),
+      isFeatured: Boolean(body.isFeatured),
       isActive: Boolean(body.isActive ?? true),
-
-      // Array Fields (Ensure they are arrays)
-      images: Array.isArray(body.images) ? body.images : [], // Type: IProductImage[]
-      specifications: Array.isArray(body.specifications) ? body.specifications : [], // Type: AttributeSchema
-      seoKeywords: Array.isArray(body.seoKeywords) ? body.seoKeywords : [],
-      reviews: Array.isArray(body.reviews) ? body.reviews : [], // Type: IReview[] - assuming this type, update as necessary
-
-      // SEO & Status
-      seoTitle: body.seoTitle || "",
+      status: body.status || "ACTIVE",
+      
+      seoTitle: body.seoTitle || body.name,
       seoDescription: body.seoDescription || "",
-      status: body.status || "ACTIVE", // Should be one of the enum values
-      
-      // Category (Nested Object) - Ensure all fields are present or removed
-      category: body.category && body.category._id ? {
-          _id: body.category._id,
-          name: body.category.name || "",
-          slug: body.category.slug || "",
-      } : null,
-      
-      // DuplicateOf (ObjectId)
-      duplicateOf: body.duplicateOf || null,
-    };
-    
-    // 3. Handle Variants (Complex Nested Array)
-    if (Array.isArray(body.variants)) {
-        const filteredVariants: IVariant[] = body.variants.filter(
-            (v: IVariant) => v.name && v.options?.length > 0
-        );
+      seoKeywords: body.seoKeywords || [],
 
-        updateFields.variants = filteredVariants.map((v) => ({
+      // Variants Handling
+      variants: Array.isArray(body.variants)
+        ? body.variants.map((v: any) => ({
             name: v.name,
             options: Array.isArray(v.options)
-                ? v.options.map((o: IVariantOption) => ({
-                    value: o.value,
-                    price: o.price ? safeNumber(o.price) : undefined,
-                    stock: o.stock ? safeNumber(o.stock, 0) : 0,
-                    sku: o.sku || "",
+              ? v.options.map((o: any) => ({
+                  value: o.value,
+                  price: o.price ? Number(o.price) : undefined,
+                  stock: o.stock ? Number(o.stock) : 0,
+                  sku: o.sku || "",
                 }))
-                : [],
-        }));
-    } else {
-        // If 'variants' is explicitly null or undefined in the body, remove it from the document
-        updateFields.variants = []; 
-    }
+              : [],
+          }))
+        : [],
+        
+      lastUpdatedIndex: Date.now(),
+    });
 
-    // 4. Handle Combo Products
-    if (body.isCombo && Array.isArray(body.comboProducts)) {
-        updateFields.comboProducts = body.comboProducts.map((comboItem: any) => ({
-            product: comboItem.product, // Assuming this is a valid ObjectId
-            quantity: safeNumber(comboItem.quantity, 1),
-        })).filter((item: any) => item.product); // Filter out any items without a product ID
-    } else {
-        updateFields.comboProducts = []; // Clear combo products if not a combo or data is missing
-    }
+    await product.save();
 
-
-
-    const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
-        new: true,
-        runValidators: true, // Crucial for enforcing schema rules during update
-    }).lean();
-
-    if (!updatedProduct) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-
-    // 6. Revalidation (Next.js Cache Management)
-    revalidatePath("/");
+    // 5. Revalidate Cache (Frontend will update instantly)
     revalidatePath("/admin/products");
-    revalidatePath(`/products/${updatedProduct.slug}`); // Revalidate the product detail page
+    revalidatePath("/"); // Homepage
+    revalidatePath("/products");
 
-    return NextResponse.json(
-      { success: true, product: updatedProduct },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, message: "Product Created Successfully", product }, { status: 201 });
   } catch (error: any) {
-    console.error("Error updating product:", error);
-    return NextResponse.json(
-      { error: "Failed to update product" },
-      { status: 500 }
-    );
+    console.error("❌ Error creating product:", error);
+    return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 });
   }
 }
-// ==========================
-// DELETE → Remove product by ID
-// ==========================
-export async function DELETE(
-  req: NextRequest,
-  { params }: IdParams
-) {
-    const {id} = (await params)
+
+// =============================================================
+// GET → Fetch Paginated Products (Search, Filter, Sort)
+// =============================================================
+export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
-    const deletedProduct = await Product.findByIdAndDelete(id).lean();
 
-    if (!deletedProduct) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const { searchParams } = new URL(req.url);
+
+    // Pagination
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 20;
+    const skip = (page - 1) * limit;
+
+    // Filters
+    const search = searchParams.get("search") || "";
+    const category = searchParams.get("category");
+    const status = searchParams.get("status"); // DRAFT | ACTIVE | ARCHIVED
+    const fields = searchParams.get("fields"); // Select specific fields
+
+    const query: any = {};
+
+    /** 🔍 Optimized Search (Regex for partial match) */
+    if (search) {
+      const regex = new RegExp(search, "i");
+      query.$or = [
+        { name: regex },
+        { shortName: regex },
+        { sku: regex }, // 👈 Added SKU Search
+        { "category.name": regex }
+      ];
     }
 
-    revalidatePath("/");
-    revalidatePath("/admin/products");
+    /** 🟦 Category Filter */
+    if (category) {
+      // Check if it's an ID or Slug
+      const isMongoId = /^[a-f\d]{24}$/i.test(category);
+      if (isMongoId) {
+        query["category._id"] = category;
+      } else {
+        query["category.slug"] = category;
+      }
+    }
+
+    /** 🟩 Status Filter */
+    if (status) {
+      query.status = status;
+    } else {
+    
+         query.status = "ACTIVE";
+         query.isActive = true;
+    
+    }
+
+    /** 🟧 Sorting Logic */
+    let sortOption: any = { createdAt: -1 }; // Default Newest First
+    const sortParam = searchParams.get("sort");
+
+    if (sortParam === "price_asc") sortOption = { price: 1 };
+    if (sortParam === "price_desc") sortOption = { price: -1 };
+    if (sortParam === "sold") sortOption = { sold: -1 }; // Best Sellers
+    if (limit === 18 || limit === 100) sortOption = { lastUpdatedIndex: -1 }; // Custom Logic
+
+    /** ⚡ Field Selection (Projection) */
+    let selectFields = "";
+    if (fields) {
+      selectFields = fields.split(",").join(" ");
+    }
+
+    /** 🚀 Execute Query */
+    const productsQuery = Product.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .select(selectFields)
+      .lean(); // .lean() converts Mongoose doc to Plain JS Object (Much Faster)
+
+    const [products, totalCount] = await Promise.all([
+      productsQuery,
+      Product.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     return NextResponse.json(
-      { success: true, product: deletedProduct },
+      {
+        success: true,
+        products,
+        meta: {
+          currentPage: page,
+          totalPages,
+          totalCount,
+          limit
+        }
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error deleting product:", error);
+    console.error("❌ Error fetching products:", error);
     return NextResponse.json(
-      { error: "Failed to delete product" },
+      { error: "Failed to fetch products" },
       { status: 500 }
     );
   }
