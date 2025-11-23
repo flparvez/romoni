@@ -18,14 +18,7 @@ const navLinks = [
 const BottomBarAdmin = () => {
 
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
 
-  // ✅ Ensures we only render after client hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null; // Prevent hydration mismatch
 
 
   return (

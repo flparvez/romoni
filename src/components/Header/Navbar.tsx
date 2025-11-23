@@ -18,10 +18,7 @@ interface IProduct {
 
 // --- Utility Hooks ---
 
-/**
- * Custom hook to debounce a value.
- * The returned value only updates after the specified delay.
- */
+
 const useDebounce = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 

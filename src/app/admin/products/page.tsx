@@ -10,7 +10,7 @@ export default async function AdminProductsPage() {
   // Use the correct route: /api/products
   const res = await fetch(
     `${SITE_URL}/api/products?page=${page}&limit=${limit}`,
-    { cache: "no-store" }
+    { cache: "force-cache", next: { revalidate: 60 } }
   );
 
   if (!res.ok) {
